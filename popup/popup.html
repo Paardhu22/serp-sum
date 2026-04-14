@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>ELI5</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 290px;
+      background: linear-gradient(145deg, #16161f 0%, #0f0f17 100%);
+      color: rgba(255,255,255,0.88);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      padding: 0 0 14px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 8px 32px rgba(0,0,0,0.55),
+        0 2px 8px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 16px 13px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .header-icon { width: 30px; height: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+    .header-title { font-size: 15px; font-weight: 700; letter-spacing: 0.4px; color: #fff; }
+    .header-sub { font-size: 9.5px; color: rgba(255,255,255,0.3); letter-spacing: 0.6px; text-transform: uppercase; margin-top: 2px; }
+
+    /* ── Section ── */
+    .section { padding: 14px 16px 0; }
+
+    .label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 9px;
+    }
+
+    /* ── Predefined persona chips ── */
+    .chips {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+    .chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 11px;
+      padding: 9px 11px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+      color: rgba(255,255,255,0.72);
+      font-family: inherit;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .chip:hover {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.95);
+      transform: translateY(-1px);
+    }
+    .chip:active { transform: translateY(0); }
+    .chip.active {
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.45);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 0 14px rgba(255,255,255,0.07), 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.10);
+    }
+    .chip-emoji { display: block; font-size: 16px; margin-bottom: 4px; }
+    .chip-label { font-size: 12px; font-weight: 600; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 14px 16px 0; }
+
+    /* ── Custom personas list ── */
+    .custom-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 130px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.1) transparent;
+      padding-right: 2px;
+    }
+    .custom-list::-webkit-scrollbar { width: 3px; }
+    .custom-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    .custom-persona-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .custom-persona-row:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .custom-persona-row.active {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.42);
+      box-shadow: 0 0 12px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .custom-persona-info { flex: 1; min-width: 0; }
+    .custom-persona-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .custom-persona-desc {
+      font-size: 11px;
+      color: rgba(255,255,255,0.48);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .custom-persona-delete {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.28);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 2px 5px;
+      border-radius: 5px;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .custom-persona-delete:hover {
+      color: rgba(255,100,100,0.9);
+      background: rgba(255,80,80,0.10);
+    }
+
+    .empty-state {
+      text-align: center;
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.3);
+      padding: 10px 0 6px;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Add persona form ── */
+    .add-form {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .text-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 9px;
+      padding: 7px 10px;
+      color: rgba(255,255,255,0.88);
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.18s, background 0.18s;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .text-input::placeholder { color: rgba(255,255,255,0.3); }
+    .text-input:focus {
+      border-color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.07);
+    }
+    textarea.text-input { resize: none; line-height: 1.5; }
+
+    .btn-add {
+      align-self: flex-end;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 6px 13px;
+      font-size: 11.5px;
+      font-weight: 500;
+      font-family: inherit;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .btn-add:hover {
+      background: rgba(255,255,255,0.11);
+      border-color: rgba(255,255,255,0.22);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .btn-add:active { transform: scale(0.96); }
+
+    /* ── Format chips ── */
+    .format-chips { display: flex; gap: 7px; }
+    .fmt-chip {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 11px;
+      padding: 9px 6px;
+      cursor: pointer;
+      font-family: inherit;
+      color: rgba(255,255,255,0.65);
+      transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .fmt-chip:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.9);
+      transform: translateY(-1px);
+    }
+    .fmt-chip:active { transform: translateY(0); }
+    .fmt-chip.active {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.38);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 0 12px rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .fmt-icon { font-size: 15px; line-height: 1; font-weight: 700; }
+    .fmt-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1px; }
+
+    /* ── Action buttons ── */
+    .btn-row { display: flex; gap: 8px; padding: 14px 16px 0; align-items: flex-start; }
+    .btn {
+      flex: 1;
+      border: none;
+      border-radius: 11px;
+      padding: 9px 12px;
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-save {
+      background: rgba(255,255,255,0.90);
+      color: #10101a;
+      box-shadow: 0 2px 10px rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .btn-save:hover {
+      opacity: 0.92;
+      box-shadow: 0 4px 16px rgba(255,255,255,0.12), 0 1px 3px rgba(0,0,0,0.3);
+      transform: translateY(-1px);
+    }
+    .snip-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .btn-snip {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.65);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .btn-snip:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.9);
+      transform: translateY(-1px);
+    }
+    .snip-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+    .snip-shortcut {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    kbd {
+      display: inline-block;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 9.5px;
+      font-family: inherit;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.5;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .kbd-sep {
+      font-size: 9px;
+      color: rgba(255,255,255,0.25);
+      margin: 0 1px;
+    }
+    .snip-change {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 9.5px;
+      color: rgba(255,255,255,0.28);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .snip-change:hover { color: rgba(255,255,255,0.6); }
+
+    /* ── Toast ── */
+    .toast {
+      margin: 11px 16px 0;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 9px;
+      padding: 7px 12px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      pointer-events: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .btn-save:active { transform: scale(0.95) !important; }
+    .btn-snip:active { transform: scale(0.95) !important; }
+    .btn-add:disabled, .btn-save:disabled, .btn-snip:disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <img class="header-icon" src="../assets/eli5-nobg.png" alt="ELI5" />
+    <div>
+      <div class="header-title">ELI5</div>
+      <div class="header-sub">Explain Like I'm 5</div>
+    </div>
+  </div>
+
+  <!-- Predefined personas -->
+  <div class="section">
+    <div class="label">Persona</div>
+    <div class="chips">
+      <button class="chip" data-persona="teacher">
+        <span class="chip-emoji">📖</span>
+        <span class="chip-label">Teacher</span>
+      </button>
+      <button class="chip" data-persona="friendly">
+        <span class="chip-emoji">😊</span>
+        <span class="chip-label">Friendly</span>
+      </button>
+      <button class="chip" data-persona="professional">
+        <span class="chip-emoji">💼</span>
+        <span class="chip-label">Professional</span>
+      </button>
+      <button class="chip" data-persona="genz">
+        <span class="chip-emoji">✌️</span>
+        <span class="chip-label">Gen Z</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Custom personas -->
+  <div class="section" style="margin-top:13px;">
+    <div class="label">Custom Personas</div>
+
+    <!-- Saved list -->
+    <div class="custom-list" id="customPersonaList">
+      <div class="empty-state" id="emptyState">No custom personas yet</div>
+    </div>
+
+    <!-- Add new form -->
+    <div class="add-form">
+      <input
+        id="newPersonaName"
+        class="text-input"
+        type="text"
+        placeholder="Name  (e.g. Pirate Captain)"
+        maxlength="30"
+      />
+      <textarea
+        id="newPersonaDesc"
+        class="text-input"
+        rows="2"
+        placeholder="Description  (e.g. Explain like a pirate…)"
+      ></textarea>
+      <button class="btn-add" id="addPersonaBtn">+ Add</button>
+    </div>
+  </div>
+
+  <!-- Format picker -->
+  <div class="section" style="margin-top:13px;">
+    <div class="label">Response Format</div>
+    <div class="format-chips">
+      <button class="fmt-chip" data-format="bullets">
+        <span class="fmt-icon">•</span>
+        <span class="fmt-label">Bullets</span>
+      </button>
+      <button class="fmt-chip" data-format="paragraph">
+        <span class="fmt-icon">¶</span>
+        <span class="fmt-label">Paragraph</span>
+      </button>
+      <button class="fmt-chip" data-format="simple">
+        <span class="fmt-icon">✦</span>
+        <span class="fmt-label">Simple</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Action buttons -->
+  <div class="btn-row">
+    <button class="btn btn-save" id="save">Save</button>
+    <div class="snip-group">
+      <button class="btn btn-snip" id="snip">✂️ Snip Mode</button>
+      <div class="snip-meta">
+        <span class="snip-shortcut">
+          <kbd>Ctrl</kbd><span class="kbd-sep">+</span><kbd>Shift</kbd><span class="kbd-sep">+</span><kbd>S</kbd>
+        </span>
+        <button class="snip-change" id="changeShortcut" title="Customize in Chrome settings">Change</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

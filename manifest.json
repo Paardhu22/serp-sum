@@ -1,0 +1,61 @@
+{
+    "name": "ELI5: Explain Like I'm 5",
+    "version": "0.1.0",
+    "description": "Understand complex text instantly with simple explanations",
+  
+    "manifest_version": 3,
+  
+    "permissions": [
+      "storage",
+      "activeTab",
+      "tabs",
+      "scripting",
+      "clipboardWrite"
+    ],
+  
+    "host_permissions": [
+      "<all_urls>"
+    ],
+  
+    "background": {
+      "service_worker": "background.js"
+    },
+  
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["contentScript.js"]
+      }
+    ],
+  
+    "action": {
+      "default_title": "ELI5: Explain Like I'm 5",
+      "default_popup": "popup/popup.html",
+      "default_icon": {
+        "16": "assets/eli5-nobg.png",
+        "24": "assets/eli5-nobg.png",
+        "32": "assets/eli5-nobg.png",
+        "48": "assets/eli5-nobg.png",
+        "128": "assets/eli5-nobg.png"
+      }
+    },
+
+    "icons": {
+    "16": "assets/eli5-nobg.png",
+    "32": "assets/eli5-nobg.png",
+    "48": "assets/eli5-nobg.png",
+    "128": "assets/eli5-nobg.png"
+  },
+  
+  "options_page": "options/options.html",
+
+  "commands": {
+    "start-snip": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Start Snip Mode"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# Secret keys — never commit
+secrets.js
+.env
+.env.*
+*.pem
+*.key
