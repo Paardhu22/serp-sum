@@ -106,17 +106,16 @@ Style:
 - Very casual, modern internet tone
 - Use Gen Z slang naturally throughout
 - Short, punchy lines with personality
-- Say things like "ok so basically…", "this is lowkey wild", "ngl this part is kinda important", "fr though…"
+- Say things like "ok so basically...", "this is lowkey wild", "ngl this part is kinda important", "fr though..."
 
 Rules:
-- At least 1–2 lines MUST include Gen Z slang or reactions
-- Use light emojis where it fits (not spammy) — 💀 😂 🔥 are fine
+- At least 1-2 lines MUST include Gen Z slang or reactions
 - NEVER sound formal or textbook-like
 - Keep sentences short and energetic
+- Do NOT use emojis
 
 Allowed slang (use naturally, not forced):
 - "no cap", "fr", "lowkey", "highkey", "tbh", "ngl", "basically", "wild", "hits different", "main character energy"
-- Reactions: "💀", "😂", "😭", "🔥", "bruh"
 
 Tone:
 - Like a smart friend explaining things in a group chat
@@ -143,6 +142,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "EXPLAIN_TEXT") {
     explainText(message.text)
       .then((explanation) => sendResponse({ success: true, explanation }))
+      .catch((err) => {
+        sendResponse({ success: false, error: err.message });
+      });
+    return true;
+  }
+
+  if (message.type === "CHAT_MESSAGE") {
+    chatMessage(message.messages)
+      .then((reply) => sendResponse({ success: true, reply }))
       .catch((err) => {
         sendResponse({ success: false, error: err.message });
       });
@@ -183,24 +191,30 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 // ── Shared backend caller ─────────────────────────────────────────────────────
 async function callBackend(messages, temperature, maxTokens = 250) {
-  const response = await fetch(`${BACKEND}/api/explain`, {
+  const { openaiKey } = await chrome.storage.sync.get("openaiKey");
+  if (!openaiKey) throw new Error("OpenAI API Key not found. Please add it in the settings.");
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${openaiKey}`
+    },
     body: JSON.stringify({
       messages,
       temperature,
-      max_tokens: maxTokens,
-      model: "gpt-4o-mini",
+      max_completion_tokens: maxTokens,
+      model: "gpt-5.4-nano",
     }),
   });
 
   const data = await response.json();
 
-  if (!data.success) {
-    throw new Error(data.error || "Backend request failed.");
+  if (data.error) {
+    throw new Error(data.error.message || "API request failed.");
   }
 
-  return data.explanation;
+  return data.choices[0].message.content;
 }
 
 // ── Core function ─────────────────────────────────────────────────────────────
@@ -244,6 +258,20 @@ ${formatInstruction}
     getTemperature(personaId),
     250,
   );
+}
+
+// ── Chat function ─────────────────────────────────────────────────────────────
+async function chatMessage(messagesArray) {
+  const systemPrompt = `You are a helpful and intelligent AI assistant. 
+  You can summarize text, answer questions, and assist with any tasks the user gives you.
+  Be concise, helpful, and direct.`;
+  
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...messagesArray
+  ];
+
+  return callBackend(messages, 0.7, 500);
 }
 
 // ── Refine function ───────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 {
-    "name": "ELI5: Explain Like I'm 5",
+    "name": "serp-sum",
     "version": "0.1.0",
     "description": "Understand complex text instantly with simple explanations",
   
@@ -29,7 +29,7 @@
     ],
   
     "action": {
-      "default_title": "ELI5: Explain Like I'm 5",
+      "default_title": "serp-sum",
       "default_popup": "popup/popup.html",
       "default_icon": {
         "16": "assets/eli5-nobg.png",

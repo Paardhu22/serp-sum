@@ -1,0 +1,31 @@
+{
+  "name": "serp-sum-v2",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "The AI Browser OS",
+  "action": {
+    "default_title": "serp-sum Menu"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.tsx"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "index.html"
+  }
+}
