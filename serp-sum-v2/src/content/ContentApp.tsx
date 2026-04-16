@@ -1,8 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
+import { MessageMarkdown } from '../components/MessageMarkdown';
+import type { ChatMessage, KnowledgeSource } from '../shared/types';
+
+interface ChatResponse {
+  success?: boolean;
+  reply?: string;
+  explanation?: string;
+  error?: string;
+}
+
+function getPageContext(): KnowledgeSource {
+  return {
+    origin: 'content-popup',
+    pageTitle: document.title || undefined,
+    pageUrl: window.location.href || undefined,
+  };
 }
 
 export const ContentApp = () => {
@@ -52,11 +65,20 @@ export const ContentApp = () => {
     setIsOpen(true);
     setIsLoading(true);
     setChatHistory([]);
-    setPopupPos({ top: 100, left: window.innerWidth - 420 });
+    setPopupPos({ top: 100, left: Math.max(24, window.innerWidth - 420) });
 
-    chrome.runtime.sendMessage({ type: "EXPLAIN_TEXT", text: selectedText }, (res) => {
+    chrome.runtime.sendMessage({
+      type: 'EXPLAIN_TEXT',
+      text: selectedText,
+      context: getPageContext(),
+    }, (res: ChatResponse) => {
       setIsLoading(false);
-      if (chrome.runtime.lastError || !res?.success) {
+      if (chrome.runtime.lastError) {
+        setChatHistory([{ role: 'assistant', content: `❌ Error: ${chrome.runtime.lastError.message || 'Request failed'}` }]);
+        return;
+      }
+
+      if (!res?.success || typeof res.explanation !== 'string') {
         setChatHistory([{ role: 'assistant', content: '❌ Error: ' + (res?.error || 'Request failed') }]);
       } else {
         setChatHistory([{ role: 'assistant', content: res.explanation }]);
@@ -73,9 +95,19 @@ export const ContentApp = () => {
     setInputValue("");
     setIsLoading(true);
 
-    chrome.runtime.sendMessage({ type: "CHAT_MESSAGE", messages: newHistory }, (res) => {
+    chrome.runtime.sendMessage({
+      type: 'CHAT_MESSAGE',
+      messages: newHistory,
+      context: getPageContext(),
+    }, (res: ChatResponse) => {
       setIsLoading(false);
-      if (res?.success) {
+
+      if (chrome.runtime.lastError) {
+        setChatHistory([...newHistory, { role: 'assistant', content: `❌ Error: ${chrome.runtime.lastError.message || 'Failed to reply.'}` }]);
+        return;
+      }
+
+      if (res?.success && typeof res.reply === 'string') {
         setChatHistory([...newHistory, { role: 'assistant', content: res.reply }]);
       } else {
         setChatHistory([...newHistory, { role: 'assistant', content: '❌ Error: Failed to reply.' }]);
@@ -115,7 +147,11 @@ export const ContentApp = () => {
           <div className="p-4 flex-1 overflow-y-auto flex flex-col space-y-3 min-h-[150px] max-h-[400px] scrollbar-thin scrollbar-thumb-white/10">
             {chatHistory.map((msg, i) => (
               <div key={i} className={`text-sm p-3 rounded-2xl w-[90%] break-words ${msg.role === 'user' ? 'bg-indigo-600/40 text-white self-end rounded-br-sm' : 'bg-white/10 text-gray-200 border border-white/5 self-start rounded-bl-sm'}`}>
-                {msg.content}
+                {msg.role === 'assistant' ? (
+                  <MessageMarkdown content={msg.content} compact />
+                ) : (
+                  <p className="whitespace-pre-wrap text-[14px] leading-6">{msg.content}</p>
+                )}
               </div>
             ))}
             {isLoading && (
