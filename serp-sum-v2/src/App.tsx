@@ -154,9 +154,14 @@ function App() {
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-[#0f0f14] text-white selection:bg-purple-500/30">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/5">
-        <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-          serp-sum OS
+      <div className="flex items-center justify-between p-4">
+        <h1 className="flex items-center gap-2 text-lg font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <img
+            src="/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png"
+            alt="serp-sum logo"
+            className="h-11 w-11 rounded-lg object-contain"
+          />
+          <span>serp-sum OS</span>
         </h1>
         <div className="flex items-center gap-3">
           <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
@@ -167,7 +172,8 @@ function App() {
       <div className="flex gap-2 p-3">
         <button 
           onClick={() => setActiveTab('chat')}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === 'chat' ? 'bg-white/15 border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`flex-1 rounded-xl px-4 py-2.5 text-[15px] font-semibold tracking-[0.01em] transition-all ${activeTab === 'chat' ? 'bg-white/15 border border-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+          style={{ fontFamily: 'var(--font-ui)' }}
         >
           Chat
         </button>
@@ -176,7 +182,8 @@ function App() {
             setActiveTab('knowledge');
             loadKnowledge();
           }}
-          className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${activeTab === 'knowledge' ? 'bg-white/15 border border-white/10' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`flex-1 rounded-xl px-4 py-2.5 text-[15px] font-semibold tracking-[0.01em] transition-all ${activeTab === 'knowledge' ? 'bg-white/15 border border-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+          style={{ fontFamily: 'var(--font-ui)' }}
         >
           Knowledge
         </button>

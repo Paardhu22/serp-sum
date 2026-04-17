@@ -123,13 +123,13 @@ export function MessageMarkdown({ content, compact = false }: MessageMarkdownPro
     const bodyTextClass = compact ? 'text-[13px] leading-6 text-gray-100' : 'text-[14px] leading-7 text-gray-100';
 
     return {
-      p: ({ children }) => <p className={`${bodyTextClass} mb-3 last:mb-0`}>{children}</p>,
+      p: ({ children }) => <p className={`${bodyTextClass} mb-3 last:mb-0`} style={{ fontFamily: 'var(--font-content)' }}>{children}</p>,
       h1: ({ children }) => <h1 className="mb-3 mt-1 text-lg font-semibold text-white" style={{ fontFamily: 'var(--font-content)' }}>{children}</h1>,
       h2: ({ children }) => <h2 className="mb-2 mt-4 text-base font-semibold text-white" style={{ fontFamily: 'var(--font-content)' }}>{children}</h2>,
       h3: ({ children }) => <h3 className="mb-2 mt-3 text-sm font-semibold uppercase tracking-wide text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</h3>,
-      ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-gray-100">{children}</ul>,
-      ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-gray-100">{children}</ol>,
-      li: ({ children }) => <li className={bodyTextClass}>{children}</li>,
+      ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</ul>,
+      ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</ol>,
+      li: ({ children }) => <li className={bodyTextClass} style={{ fontFamily: 'var(--font-content)' }}>{children}</li>,
       table: ({ children }) => (
         <div className="my-4 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03]">
           <table className="w-full min-w-[360px] border-collapse text-left">{children}</table>
@@ -143,14 +143,14 @@ export function MessageMarkdown({ content, compact = false }: MessageMarkdownPro
           {children}
         </th>
       ),
-      td: ({ children }) => <td className="px-3 py-2 text-[13px] leading-6 text-gray-100">{children}</td>,
+      td: ({ children }) => <td className="px-3 py-2 text-[13px] leading-6 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</td>,
       a: ({ href, children }) => (
         <a href={href} target="_blank" rel="noreferrer" className="text-blue-300 underline decoration-blue-300/40 underline-offset-4">
           {children}
         </a>
       ),
       blockquote: ({ children }) => (
-        <blockquote className="my-3 border-l-2 border-sky-400/40 bg-sky-500/10 px-3 py-2 text-gray-100">{children}</blockquote>
+        <blockquote className="my-3 border-l-2 border-sky-400/40 bg-sky-500/10 px-3 py-2 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</blockquote>
       ),
       code: ({ inline, className, children }: CodeRendererProps) => {
         const codeText = getTextContent(children).replace(/\n$/, '');
