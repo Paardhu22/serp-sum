@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
 import { MessageMarkdown } from './components/MessageMarkdown';
 import type { ChatMessage, KnowledgeItem } from './shared/types';
@@ -37,6 +37,7 @@ function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
+  const [knowledgeSearch, setKnowledgeSearch] = useState('');
   const [knowledgeError, setKnowledgeError] = useState('');
   const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false);
   const [isClearingKnowledge, setIsClearingKnowledge] = useState(false);
@@ -132,8 +133,26 @@ function App() {
     }
   }, [messages, isLoading]);
 
+  const filteredKnowledgeItems = useMemo(() => {
+    const query = knowledgeSearch.trim().toLowerCase();
+    if (!query) {
+      return knowledgeItems;
+    }
+
+    return knowledgeItems.filter((item) => {
+      const haystack = [
+        item.title,
+        item.prompt,
+        item.response,
+        item.source.pageTitle || '',
+      ].join(' ').toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [knowledgeItems, knowledgeSearch]);
+
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-[#0f0f14] text-white font-sans selection:bg-purple-500/30">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-[#0f0f14] text-white selection:bg-purple-500/30">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/5">
         <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
@@ -231,6 +250,21 @@ function App() {
             Saved answers are stored in local extension storage on this device, so you can open this tab even when offline.
           </p>
 
+          <div className="mb-4">
+            <label htmlFor="knowledge-search" className="sr-only">Search knowledge</label>
+            <input
+              id="knowledge-search"
+              type="text"
+              value={knowledgeSearch}
+              onChange={(event) => setKnowledgeSearch(event.target.value)}
+              placeholder="Search by keyword in title, prompt, answer..."
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100 outline-none transition-colors placeholder:text-gray-500 focus:border-sky-400/40"
+            />
+            <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-gray-500">
+              {filteredKnowledgeItems.length} result{filteredKnowledgeItems.length === 1 ? '' : 's'}
+            </p>
+          </div>
+
           {knowledgeError && (
             <div className="mb-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">
               {knowledgeError}
@@ -248,9 +282,15 @@ function App() {
                 Ask questions or summarize text to build your local knowledge library.
               </p>
             </div>
+          ) : filteredKnowledgeItems.length === 0 ? (
+            <div className="flex h-[50%] flex-col items-center justify-center text-center">
+              <p className="max-w-[260px] text-sm leading-6 text-gray-400">
+                No saved knowledge matches your search. Try a different keyword.
+              </p>
+            </div>
           ) : (
-            <div className="space-y-3 overflow-y-auto pr-1 pb-2 max-h-[calc(100vh-180px)] scrollbar-thin scrollbar-thumb-white/5">
-              {knowledgeItems.map((item) => (
+            <div className="space-y-3 overflow-y-auto pr-1 pb-2 max-h-[calc(100vh-250px)]">
+              {filteredKnowledgeItems.map((item) => (
                 <article key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-3">
                   <div className="mb-2">
                     <h3 className="text-sm font-semibold text-white leading-6">{item.title}</h3>

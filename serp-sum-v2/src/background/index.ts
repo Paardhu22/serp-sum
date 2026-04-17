@@ -70,6 +70,7 @@ const CHAT_SYSTEM_PROMPT = [
   'Response rules:',
   '- Answers must be useful, specific, and well-structured.',
   '- Use markdown headings, bullets, and short sections for readability.',
+  '- For comparisons, complexity analysis, trade-offs, pros/cons, or option breakdowns, prefer markdown tables.',
   '- Do not use markdown bold syntax based on double-asterisk markers.',
   '- If code helps, include a fenced code block with a language tag.',
   '- For coding questions, provide a clean minimal example that can run as-is.',
@@ -171,16 +172,25 @@ async function getKnowledgeItems(): Promise<KnowledgeItem[]> {
 }
 
 async function saveKnowledgeItem(input: Omit<KnowledgeItem, 'id' | 'createdAt'>): Promise<void> {
-  const existing = await getKnowledgeItems();
+  try {
+    const existing = await getKnowledgeItems();
+    console.log('[BG] Existing knowledge items:', existing.length);
 
-  const newItem: KnowledgeItem = {
-    ...input,
-    id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : fallbackKnowledgeId(),
-    createdAt: new Date().toISOString(),
-  };
+    const newItem: KnowledgeItem = {
+      ...input,
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : fallbackKnowledgeId(),
+      createdAt: new Date().toISOString(),
+    };
 
-  const merged = [newItem, ...existing].slice(0, MAX_KNOWLEDGE_ITEMS);
-  await chrome.storage.local.set({ [KNOWLEDGE_STORAGE_KEY]: merged });
+    const merged = [newItem, ...existing].slice(0, MAX_KNOWLEDGE_ITEMS);
+    console.log('[BG] Saving knowledge item:', newItem.title, '| Total after:', merged.length);
+    
+    await chrome.storage.local.set({ [KNOWLEDGE_STORAGE_KEY]: merged });
+    console.log('[BG] Knowledge item saved successfully');
+  } catch (err) {
+    console.error('[BG] Error saving knowledge:', err);
+    throw err;
+  }
 }
 
 async function resolvePersona(activePersonaId?: string, customPersonas: CustomPersona[] = []) {
@@ -197,6 +207,7 @@ async function callBackend(messages: OpenAIMessage[], temperature: number, maxTo
   const BACKEND_URL = 'http://localhost:3000/api/chat';
 
   try {
+    console.log('[BG] Calling backend:', BACKEND_URL);
     const response = await fetch(BACKEND_URL, {
       method: 'POST',
       headers: { 
@@ -210,6 +221,7 @@ async function callBackend(messages: OpenAIMessage[], temperature: number, maxTo
     });
 
     const data = await response.json();
+    console.log('[BG] Backend response status:', response.ok, 'Status code:', response.status);
     
     if (!response.ok) {
       throw new Error(data?.error || 'Backend request failed.');
@@ -219,47 +231,77 @@ async function callBackend(messages: OpenAIMessage[], temperature: number, maxTo
       throw new Error(data?.error || 'No response from backend.');
     }
 
+    console.log('[BG] Backend reply received, length:', data.reply.length);
     return data.reply.trim();
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Connection error';
+    console.error('[BG] Backend error:', msg);
     throw new Error(`Backend error: ${msg}. Is the server running on localhost:3000?`);
   }
 }
 
 // ── Message Listener ─────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
-  if (message.type === "EXPLAIN_TEXT") {
-    handleExplainText(message.text, message.context)
-      .then((explanation) => sendResponse({ success: true, explanation }))
-      .catch((err) => sendResponse({ success: false, error: err.message }));
-    return true; // Keep channel open
-  }
+  const safeError = (err: unknown) => {
+    if (err instanceof Error) return { success: false, error: err.message };
+    return { success: false, error: String(err) };
+  };
 
-  if (message.type === "CHAT_MESSAGE") {
-    handleChatMessage(message.messages, message.context)
-      .then((reply) => sendResponse({ success: true, reply }))
-      .catch((err) => sendResponse({ success: false, error: err.message }));
-    return true;
-  }
+  try {
+    if (message.type === "EXPLAIN_TEXT") {
+      handleExplainText(message.text, message.context)
+        .then((explanation) => sendResponse({ success: true, explanation }))
+        .catch((err) => sendResponse(safeError(err)));
+      return true;
+    }
 
-  if (message.type === 'GET_KNOWLEDGE') {
-    getKnowledgeItems()
-      .then((items) => sendResponse({ success: true, items }))
-      .catch((err) => sendResponse({ success: false, error: err.message }));
-    return true;
-  }
+    if (message.type === "CHAT_MESSAGE") {
+      handleChatMessage(message.messages, message.context)
+        .then((reply) => sendResponse({ success: true, reply }))
+        .catch((err) => sendResponse(safeError(err)));
+      return true;
+    }
 
-  if (message.type === 'CLEAR_KNOWLEDGE') {
-    chrome.storage.local.set({ [KNOWLEDGE_STORAGE_KEY]: [] })
-      .then(() => sendResponse({ success: true }))
-      .catch((err) => sendResponse({ success: false, error: err.message }));
-    return true;
+    if (message.type === 'GET_KNOWLEDGE') {
+      getKnowledgeItems()
+        .then((items) => {
+          console.log('[BG] Returning', items.length, 'knowledge items');
+          sendResponse({ success: true, items });
+        })
+        .catch((err) => {
+          console.error('[BG] GET_KNOWLEDGE error:', err);
+          sendResponse(safeError(err));
+        });
+      return true;
+    }
+
+    if (message.type === 'CLEAR_KNOWLEDGE') {
+      chrome.storage.local.set({ [KNOWLEDGE_STORAGE_KEY]: [] })
+        .then(() => {
+          console.log('[BG] Knowledge cleared');
+          sendResponse({ success: true });
+        })
+        .catch((err) => {
+          console.error('[BG] CLEAR_KNOWLEDGE error:', err);
+          sendResponse(safeError(err));
+        });
+      return true;
+    }
+
+    const unknownType = (message as { type?: string }).type;
+    console.warn('[BG] Unknown message type:', unknownType);
+    sendResponse({ success: false, error: 'Unknown message type' });
+  } catch (err) {
+    console.error('[BG] Message handler error:', err);
+    sendResponse(safeError(err));
   }
 
   return false;
 });
 
 async function handleExplainText(text: string, context?: Partial<KnowledgeSource>) {
+  console.log('[BG] handleExplainText called, text length:', text?.length);
+  
   if (!text || text.trim().length < MIN_TEXT_LENGTH) throw new Error("Please select a longer piece of text.");
   
   const { activePersonaId, customPersonas = [], format = 'bullets' } = await chrome.storage.local.get(['activePersonaId', 'customPersonas', 'format']);
@@ -285,11 +327,13 @@ async function handleExplainText(text: string, context?: Partial<KnowledgeSource
     formatInstruction,
   ].join('\n');
 
+  console.log('[BG] Calling backend for explanation...');
   const explanation = await callBackend([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: `Explain this selection:\n\n"${text}"` },
   ], PERSONA_TEMPS[personaId] || 0.55, 420);
 
+  console.log('[BG] Got explanation, now saving...');
   const source = normalizeSource(context, 'content-popup');
   await saveKnowledgeItem({
     kind: 'summary',
@@ -299,13 +343,18 @@ async function handleExplainText(text: string, context?: Partial<KnowledgeSource
     source,
   });
 
+  console.log('[BG] Explanation saved, returning...');
   return explanation;
 }
 
 async function handleChatMessage(messagesArray: ChatMessage[], context?: Partial<KnowledgeSource>) {
+  console.log('[BG] handleChatMessage called, messages count:', messagesArray?.length);
+  
   const normalizedMessages = normalizeIncomingMessages(messagesArray);
+  console.log('[BG] Calling backend for chat...');
   const reply = await callBackend([{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...normalizedMessages], 0.62, 650);
 
+  console.log('[BG] Got reply, now saving...');
   const prompt = getLastUserPrompt(normalizedMessages);
   const source = normalizeSource(context, 'side-panel');
 
@@ -317,5 +366,6 @@ async function handleChatMessage(messagesArray: ChatMessage[], context?: Partial
     source,
   });
 
+  console.log('[BG] Chat saved, returning...');
   return reply;
 }
