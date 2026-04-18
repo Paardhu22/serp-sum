@@ -120,30 +120,30 @@ export function MessageMarkdown({ content, compact = false }: MessageMarkdownPro
   const normalizedContent = useMemo(() => normalizeMessage(content), [content]);
 
   const components = useMemo<Components>(() => {
-    const bodyTextClass = compact ? 'text-[13px] leading-[1.55] text-gray-700' : 'text-[14px] leading-[1.6] text-gray-800';
+    const bodyTextClass = compact ? 'text-[15px] leading-[1.65] text-gray-800' : 'text-[16px] leading-[1.7] text-gray-900';
 
     return {
-      p: ({ children }) => <p className={`${bodyTextClass} mb-3 last:mb-0`} style={{ fontFamily: 'var(--font-ui)' }}>{children}</p>,
-      h1: ({ children }) => <h1 className="mb-3 mt-1 text-lg font-bold text-gray-900" style={{ fontFamily: 'var(--font-content)' }}>{children}</h1>,
-      h2: ({ children }) => <h2 className="mb-2 mt-4 text-base font-bold text-gray-800" style={{ fontFamily: 'var(--font-content)' }}>{children}</h2>,
-      h3: ({ children }) => <h3 className="mb-2 mt-3 text-sm font-bold uppercase tracking-wide text-gray-700" style={{ fontFamily: 'var(--font-content)' }}>{children}</h3>,
-      ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-gray-700" style={{ fontFamily: 'var(--font-ui)' }}>{children}</ul>,
-      ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-gray-700" style={{ fontFamily: 'var(--font-ui)' }}>{children}</ol>,
+      p: ({ children }) => <p className={`${bodyTextClass} mb-4 last:mb-0`} style={{ fontFamily: 'var(--font-ui)' }}>{children}</p>,
+      h1: ({ children }) => <h1 className="mb-4 mt-2 text-xl font-bold text-gray-900 leading-snug" style={{ fontFamily: 'var(--font-content)' }}>{children}</h1>,
+      h2: ({ children }) => <h2 className="mb-3 mt-5 text-lg font-bold text-gray-800 leading-snug" style={{ fontFamily: 'var(--font-content)' }}>{children}</h2>,
+      h3: ({ children }) => <h3 className="mb-2 mt-4 text-base font-bold uppercase tracking-wide text-gray-700" style={{ fontFamily: 'var(--font-content)' }}>{children}</h3>,
+      ul: ({ children }) => <ul className="mb-4 list-disc space-y-2 pl-6 text-gray-800" style={{ fontFamily: 'var(--font-ui)' }}>{children}</ul>,
+      ol: ({ children }) => <ol className="mb-4 list-decimal space-y-2 pl-6 text-gray-800" style={{ fontFamily: 'var(--font-ui)' }}>{children}</ol>,
       li: ({ children }) => <li className={bodyTextClass} style={{ fontFamily: 'var(--font-ui)' }}>{children}</li>,
       table: ({ children }) => (
-        <div className="my-4 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50/50">
-          <table className="w-full min-w-[360px] border-collapse text-left">{children}</table>
+        <div className="my-5 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50/50 shadow-sm w-full block">
+          <table className="w-full min-w-full border-collapse text-left text-[15px]">{children}</table>
         </div>
       ),
-      thead: ({ children }) => <thead className="bg-gray-100/50">{children}</thead>,
+      thead: ({ children }) => <thead className="bg-gray-100/80 border-b border-gray-200">{children}</thead>,
       tbody: ({ children }) => <tbody>{children}</tbody>,
-      tr: ({ children }) => <tr className="border-t border-gray-100 even:bg-gray-50/30">{children}</tr>,
+      tr: ({ children }) => <tr className="border-b border-gray-100 last:border-0 even:bg-gray-50/50">{children}</tr>,
       th: ({ children }) => (
-        <th className="px-3 py-2 text-[12px] uppercase tracking-[0.12em] text-gray-600 font-bold" style={{ fontFamily: 'var(--font-content)' }}>
+        <th className="px-4 py-3 text-[13px] uppercase tracking-[0.1em] text-gray-700 font-bold" style={{ fontFamily: 'var(--font-content)' }}>
           {children}
         </th>
       ),
-      td: ({ children }) => <td className="px-3 py-2 text-[13px] leading-[1.55] text-gray-700" style={{ fontFamily: 'var(--font-ui)' }}>{children}</td>,
+      td: ({ children }) => <td className="px-4 py-3 text-[15px] leading-[1.6] text-gray-800" style={{ fontFamily: 'var(--font-ui)' }}>{children}</td>,
       a: ({ href, children }) => (
         <a href={href} target="_blank" rel="noreferrer" className="text-purple-600 underline decoration-purple-300/40 underline-offset-4 font-medium transition-colors hover:text-purple-700">
           {children}

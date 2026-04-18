@@ -5,10 +5,18 @@
   "description": "The AI Browser OS",
   "action": {
     "default_title": "serp-sum Menu",
-    "default_icon": "Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png"
+    "default_icon": {
+      "16": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png",
+      "32": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png",
+      "48": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png",
+      "128": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png"
+    }
   },
   "icons": {
-    "128": "Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png"
+    "16": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png",
+    "32": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png",
+    "48": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png",
+    "128": "public/Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png"
   },
   "permissions": [
     "storage",

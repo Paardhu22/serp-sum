@@ -13,6 +13,7 @@ chrome.sidePanel
 const MIN_TEXT_LENGTH = 5;
 const KNOWLEDGE_STORAGE_KEY = 'knowledgeItems';
 const MAX_KNOWLEDGE_ITEMS = 220;
+const THINK_MODE_MIN_DELAY_MS = 15000;
 
 type FormatPreference = 'bullets' | 'paragraph' | 'simple';
 
@@ -38,6 +39,20 @@ interface ChatRequestMessage {
   context?: Partial<KnowledgeSource>;
 }
 
+interface TranslateRequestMessage {
+  type: 'TRANSLATE_TEXT';
+  text: string;
+  targetLanguage: string;
+  sourceLanguage?: string;
+}
+
+interface GenerateImageMessage {
+  type: 'GENERATE_IMAGE';
+  prompt: string;
+  style?: string;
+  size?: '1024x1024' | '1024x1536' | '1536x1024';
+}
+
 interface GetKnowledgeMessage {
   type: 'GET_KNOWLEDGE';
 }
@@ -46,7 +61,13 @@ interface ClearKnowledgeMessage {
   type: 'CLEAR_KNOWLEDGE';
 }
 
-type RuntimeMessage = ExplainTextMessage | ChatRequestMessage | GetKnowledgeMessage | ClearKnowledgeMessage;
+type RuntimeMessage = ExplainTextMessage | ChatRequestMessage | TranslateRequestMessage | GenerateImageMessage | GetKnowledgeMessage | ClearKnowledgeMessage;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 // Shared rules across requests
 const FORMAT_RULES: Record<FormatPreference, string> = {
@@ -87,8 +108,10 @@ function normalizeSource(context: Partial<KnowledgeSource> | undefined, fallback
     origin: context?.origin === 'content-popup' || context?.origin === 'side-panel' ? context.origin : fallbackOrigin,
     pageTitle: context?.pageTitle?.trim() || undefined,
     pageUrl: context?.pageUrl?.trim() || undefined,
+    thinkMode: context?.thinkMode,
   };
 }
+
 
 function normalizeIncomingMessages(messagesArray: unknown): ChatMessage[] {
   if (!Array.isArray(messagesArray)) {
@@ -202,42 +225,80 @@ async function resolvePersona(activePersonaId?: string, customPersonas: CustomPe
   return { instruction: PERSONAS[id] || PERSONAS.teacher, id };
 }
 
-// ── Shared backend caller (Local server with API key in .env) ─────────────────
-async function callBackend(messages: OpenAIMessage[], temperature: number, maxTokens = 250): Promise<string> {
-  const BACKEND_URL = 'http://localhost:3000/api/chat';
+// ── Shared backend callers (Local server with API key in .env) ────────────────
+async function callBackendEndpoint<TResponse>(path: string, payload: Record<string, unknown>): Promise<TResponse> {
+  const BACKEND_URL = `http://127.0.0.1:3000${path}`;
 
   try {
-    console.log('[BG] Calling backend:', BACKEND_URL);
+    console.log('[BG] Calling backend endpoint:', BACKEND_URL);
     const response = await fetch(BACKEND_URL, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messages,
-        temperature,
-        maxTokens,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
-    console.log('[BG] Backend response status:', response.ok, 'Status code:', response.status);
-    
     if (!response.ok) {
       throw new Error(data?.error || 'Backend request failed.');
     }
 
-    if (!data?.success || typeof data.reply !== 'string') {
-      throw new Error(data?.error || 'No response from backend.');
-    }
-
-    console.log('[BG] Backend reply received, length:', data.reply.length);
-    return data.reply.trim();
+    return data as TResponse;
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Connection error';
     console.error('[BG] Backend error:', msg);
     throw new Error(`Backend error: ${msg}. Is the server running on localhost:3000?`);
   }
+}
+
+async function callBackend(messages: OpenAIMessage[], temperature: number, maxTokens = 250, model = 'gpt-4o-mini'): Promise<string> {
+  const data = await callBackendEndpoint<{ success?: boolean; reply?: string; error?: string }>('/api/chat', {
+    messages,
+    temperature,
+    maxTokens,
+    model,
+  });
+
+  if (!data?.success || typeof data.reply !== 'string') {
+    throw new Error(data?.error || 'No response from backend.');
+  }
+
+  return data.reply.trim();
+}
+
+async function callTranslateBackend(text: string, targetLanguage: string, sourceLanguage = 'auto'): Promise<{ translatedText: string; detectedLanguage?: string }> {
+  const data = await callBackendEndpoint<{ success?: boolean; translatedText?: string; detectedLanguage?: string; error?: string }>('/api/translate', {
+    text,
+    targetLanguage,
+    sourceLanguage,
+  });
+
+  if (!data?.success || typeof data.translatedText !== 'string') {
+    throw new Error(data?.error || 'Translation failed.');
+  }
+
+  return {
+    translatedText: data.translatedText,
+    detectedLanguage: data.detectedLanguage,
+  };
+}
+
+async function callImageBackend(prompt: string, style?: string, size?: '1024x1024' | '1024x1536' | '1536x1024'): Promise<{ imageDataUrl?: string; imageUrl?: string }> {
+  const data = await callBackendEndpoint<{ success?: boolean; imageDataUrl?: string; imageUrl?: string; error?: string }>('/api/image', {
+    prompt,
+    style,
+    size,
+  });
+
+  if (!data?.success || (typeof data.imageDataUrl !== 'string' && typeof data.imageUrl !== 'string')) {
+    throw new Error(data?.error || 'Image generation failed.');
+  }
+
+  return {
+    imageDataUrl: data.imageDataUrl,
+    imageUrl: data.imageUrl,
+  };
 }
 
 // ── Message Listener ─────────────────────────────────────────────────────────
@@ -258,6 +319,20 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     if (message.type === "CHAT_MESSAGE") {
       handleChatMessage(message.messages, message.context)
         .then((reply) => sendResponse({ success: true, reply }))
+        .catch((err) => sendResponse(safeError(err)));
+      return true;
+    }
+
+    if (message.type === 'TRANSLATE_TEXT') {
+      handleTranslateText(message.text, message.targetLanguage, message.sourceLanguage)
+        .then((result) => sendResponse({ success: true, ...result }))
+        .catch((err) => sendResponse(safeError(err)));
+      return true;
+    }
+
+    if (message.type === 'GENERATE_IMAGE') {
+      handleGenerateImage(message.prompt, message.style, message.size)
+        .then((result) => sendResponse({ success: true, ...result }))
         .catch((err) => sendResponse(safeError(err)));
       return true;
     }
@@ -348,11 +423,34 @@ async function handleExplainText(text: string, context?: Partial<KnowledgeSource
 }
 
 async function handleChatMessage(messagesArray: ChatMessage[], context?: Partial<KnowledgeSource>) {
-  console.log('[BG] handleChatMessage called, messages count:', messagesArray?.length);
+  console.log('[BG] handleChatMessage called, messages count:', messagesArray?.length, 'thinkMode:', context?.thinkMode);
   
   const normalizedMessages = normalizeIncomingMessages(messagesArray);
-  console.log('[BG] Calling backend for chat...');
-  const reply = await callBackend([{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...normalizedMessages], 0.62, 650);
+  const isThinkMode = context?.thinkMode === true;
+  const startedAt = Date.now();
+  
+  // Adjust system prompt and parameters for thinkMode
+  let systemContent = CHAT_SYSTEM_PROMPT;
+  let temperature = 0.62;
+  let maxTokens = 650;
+  let model = 'gpt-4o-mini';
+
+  if (isThinkMode) {
+    systemContent += '\n\nTHINK MODE ENABLED: Work through the problem carefully, validate assumptions, compare options, and provide a final recommendation with tradeoffs.';
+    temperature = 0.42;
+    maxTokens = 1400;
+    model = 'gpt-4o';
+  }
+
+  console.log('[BG] Calling backend for chat (thinkMode:', isThinkMode, ')');
+  const reply = await callBackend([{ role: 'system', content: systemContent }, ...normalizedMessages], temperature, maxTokens, model);
+
+  if (isThinkMode) {
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < THINK_MODE_MIN_DELAY_MS) {
+      await sleep(THINK_MODE_MIN_DELAY_MS - elapsed);
+    }
+  }
 
   console.log('[BG] Got reply, now saving...');
   const prompt = getLastUserPrompt(normalizedMessages);
@@ -369,3 +467,36 @@ async function handleChatMessage(messagesArray: ChatMessage[], context?: Partial
   console.log('[BG] Chat saved, returning...');
   return reply;
 }
+
+async function handleTranslateText(text: string, targetLanguage: string, sourceLanguage = 'auto') {
+  const prompt = text?.trim() || '';
+  if (!prompt) {
+    throw new Error('Text is required for translation.');
+  }
+
+  const normalizedTarget = targetLanguage?.trim() || 'English';
+  const result = await callTranslateBackend(prompt, normalizedTarget, sourceLanguage);
+
+  await saveKnowledgeItem({
+    kind: 'summary',
+    title: `Translation to ${normalizedTarget}`,
+    prompt,
+    response: result.translatedText,
+    source: {
+      origin: 'side-panel',
+      pageTitle: 'Translation Tool',
+    },
+  });
+
+  return result;
+}
+
+async function handleGenerateImage(prompt: string, style?: string, size?: '1024x1024' | '1024x1536' | '1536x1024') {
+  const normalizedPrompt = prompt?.trim() || '';
+  if (!normalizedPrompt) {
+    throw new Error('Image prompt is required.');
+  }
+
+  return callImageBackend(normalizedPrompt, style, size);
+}
+

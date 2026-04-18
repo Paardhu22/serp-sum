@@ -9,7 +9,9 @@ export interface KnowledgeSource {
   origin: 'side-panel' | 'content-popup';
   pageTitle?: string;
   pageUrl?: string;
+  thinkMode?: boolean;
 }
+
 
 export type KnowledgeKind = 'chat' | 'summary';
 
