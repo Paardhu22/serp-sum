@@ -634,7 +634,7 @@ function App() {
         'm-3 flex flex-1 flex-col overflow-hidden rounded-[24px] border',
         isDarkMode
           ? 'border-slate-700 bg-slate-900 shadow-[0_14px_30px_-22px_rgba(0,0,0,0.7)]'
-          : 'border-[#e2e5ea] bg-white shadow-[0_14px_30px_-22px_rgba(15,23,42,0.55)]',
+          : 'border-[#e2e5ea] bg-[#f7f8fb] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.55)]',
       )}
       >
         <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto px-6 py-6 pb-0">
@@ -970,7 +970,11 @@ function App() {
         </div>
 
         {showComposer && (
-          <div className="shrink-0 p-5 pt-3">
+          <div className={cx(
+            'shrink-0 px-6 pb-5 pt-3',
+            isDarkMode ? 'bg-slate-900' : 'bg-[#f7f8fb]',
+          )}
+          >
             <div className={cx(
               'flex flex-col rounded-[24px] border transition-all',
               isDarkMode
