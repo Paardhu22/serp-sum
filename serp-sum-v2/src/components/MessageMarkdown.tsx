@@ -120,37 +120,37 @@ export function MessageMarkdown({ content, compact = false }: MessageMarkdownPro
   const normalizedContent = useMemo(() => normalizeMessage(content), [content]);
 
   const components = useMemo<Components>(() => {
-    const bodyTextClass = compact ? 'text-[13px] leading-6 text-gray-100' : 'text-[14px] leading-7 text-gray-100';
+    const bodyTextClass = compact ? 'text-[13px] leading-[1.55] text-gray-700' : 'text-[14px] leading-[1.6] text-gray-800';
 
     return {
-      p: ({ children }) => <p className={`${bodyTextClass} mb-3 last:mb-0`} style={{ fontFamily: 'var(--font-content)' }}>{children}</p>,
-      h1: ({ children }) => <h1 className="mb-3 mt-1 text-lg font-semibold text-white" style={{ fontFamily: 'var(--font-content)' }}>{children}</h1>,
-      h2: ({ children }) => <h2 className="mb-2 mt-4 text-base font-semibold text-white" style={{ fontFamily: 'var(--font-content)' }}>{children}</h2>,
-      h3: ({ children }) => <h3 className="mb-2 mt-3 text-sm font-semibold uppercase tracking-wide text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</h3>,
-      ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</ul>,
-      ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</ol>,
-      li: ({ children }) => <li className={bodyTextClass} style={{ fontFamily: 'var(--font-content)' }}>{children}</li>,
+      p: ({ children }) => <p className={`${bodyTextClass} mb-3 last:mb-0`} style={{ fontFamily: 'var(--font-ui)' }}>{children}</p>,
+      h1: ({ children }) => <h1 className="mb-3 mt-1 text-lg font-bold text-gray-900" style={{ fontFamily: 'var(--font-content)' }}>{children}</h1>,
+      h2: ({ children }) => <h2 className="mb-2 mt-4 text-base font-bold text-gray-800" style={{ fontFamily: 'var(--font-content)' }}>{children}</h2>,
+      h3: ({ children }) => <h3 className="mb-2 mt-3 text-sm font-bold uppercase tracking-wide text-gray-700" style={{ fontFamily: 'var(--font-content)' }}>{children}</h3>,
+      ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 text-gray-700" style={{ fontFamily: 'var(--font-ui)' }}>{children}</ul>,
+      ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1 pl-5 text-gray-700" style={{ fontFamily: 'var(--font-ui)' }}>{children}</ol>,
+      li: ({ children }) => <li className={bodyTextClass} style={{ fontFamily: 'var(--font-ui)' }}>{children}</li>,
       table: ({ children }) => (
-        <div className="my-4 overflow-x-auto rounded-xl border border-white/10 bg-white/[0.03]">
+        <div className="my-4 overflow-x-auto rounded-xl border border-gray-200 bg-gray-50/50">
           <table className="w-full min-w-[360px] border-collapse text-left">{children}</table>
         </div>
       ),
-      thead: ({ children }) => <thead className="bg-white/[0.04]">{children}</thead>,
+      thead: ({ children }) => <thead className="bg-gray-100/50">{children}</thead>,
       tbody: ({ children }) => <tbody>{children}</tbody>,
-      tr: ({ children }) => <tr className="border-t border-white/10 even:bg-white/[0.02]">{children}</tr>,
+      tr: ({ children }) => <tr className="border-t border-gray-100 even:bg-gray-50/30">{children}</tr>,
       th: ({ children }) => (
-        <th className="px-3 py-2 text-[12px] uppercase tracking-[0.12em] text-gray-200" style={{ fontFamily: 'var(--font-content)' }}>
+        <th className="px-3 py-2 text-[12px] uppercase tracking-[0.12em] text-gray-600 font-bold" style={{ fontFamily: 'var(--font-content)' }}>
           {children}
         </th>
       ),
-      td: ({ children }) => <td className="px-3 py-2 text-[13px] leading-6 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</td>,
+      td: ({ children }) => <td className="px-3 py-2 text-[13px] leading-[1.55] text-gray-700" style={{ fontFamily: 'var(--font-ui)' }}>{children}</td>,
       a: ({ href, children }) => (
-        <a href={href} target="_blank" rel="noreferrer" className="text-blue-300 underline decoration-blue-300/40 underline-offset-4">
+        <a href={href} target="_blank" rel="noreferrer" className="text-purple-600 underline decoration-purple-300/40 underline-offset-4 font-medium transition-colors hover:text-purple-700">
           {children}
         </a>
       ),
       blockquote: ({ children }) => (
-        <blockquote className="my-3 border-l-2 border-sky-400/40 bg-sky-500/10 px-3 py-2 text-gray-100" style={{ fontFamily: 'var(--font-content)' }}>{children}</blockquote>
+        <blockquote className="my-3 border-l-4 border-purple-200 bg-purple-50/50 px-4 py-3 text-gray-700 italic rounded-r-lg" style={{ fontFamily: 'var(--font-ui)' }}>{children}</blockquote>
       ),
       code: ({ inline, className, children }: CodeRendererProps) => {
         const codeText = getTextContent(children).replace(/\n$/, '');
@@ -162,7 +162,7 @@ export function MessageMarkdown({ content, compact = false }: MessageMarkdownPro
 
         return (
           <code
-            className="rounded border border-white/10 bg-[#14182a] px-1.5 py-0.5 text-[12px] text-sky-100"
+            className="rounded bg-gray-100 px-1.5 py-0.5 text-[12px] text-purple-700 font-medium"
             style={{ fontFamily: 'var(--font-code)' }}
           >
             {children}
