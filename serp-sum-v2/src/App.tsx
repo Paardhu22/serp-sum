@@ -2,12 +2,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MessageMarkdown } from './components/MessageMarkdown';
 import type { ChatMessage, KnowledgeItem } from './shared/types';
 
-interface ChatResponse {
-  success?: boolean;
-  reply?: string;
-  error?: string;
-}
-
 interface TranslationResponse {
   success?: boolean;
   translatedText?: string;
@@ -120,6 +114,9 @@ function App() {
   const [creatorModel, setCreatorModel] = useState('gemini-3.1-flash-image-preview');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
+  const [user, setUser] = useState<any>(null);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -175,14 +172,9 @@ function App() {
     });
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmedInput = inputText.trim();
     if (!trimmedInput || isLoading) {
-      return;
-    }
-
-    if (!chrome?.runtime?.sendMessage) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '❌ Error: Extension runtime is unavailable.' }]);
       return;
     }
 
@@ -200,35 +192,39 @@ function App() {
     setInputText('');
     setIsLoading(true);
 
-    chrome.runtime.sendMessage(
-      {
-        type: 'CHAT_MESSAGE',
-        messages: nextHistory,
-        context: {
-          origin: 'side-panel',
-          thinkMode: isThinkModeEnabled,
-          model: chatModel,
+    try {
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      },
-      (res: ChatResponse) => {
-        setIsLoading(false);
+        body: JSON.stringify({
+          messages: nextHistory,
+          temperature: 0.62,
+          maxTokens: 650,
+          model: chatModel,
+          userId: user?.id,
+          chatId: currentChatId,
+        }),
+      });
 
-        const runtimeError = chrome.runtime.lastError;
-        if (runtimeError) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${runtimeError.message || 'Request failed.'}` }]);
-          return;
+      const data = await response.json();
+      setIsLoading(false);
+
+      if (data.success && typeof data.reply === 'string') {
+        const replyText = data.reply;
+        setMessages((prev) => [...prev, { role: 'assistant', content: replyText }]);
+        if (data.chatId) {
+          setCurrentChatId(data.chatId);
         }
-
-        if (res?.success && typeof res.reply === 'string') {
-          const replyText = res.reply;
-          setMessages((prev) => [...prev, { role: 'assistant', content: replyText }]);
-          loadKnowledge();
-          return;
-        }
-
-        setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${res?.error || 'Failed to reach AI.'}` }]);
-      },
-    );
+        loadKnowledge();
+      } else {
+        setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${data.error || 'Failed to reach AI.'}` }]);
+      }
+    } catch (error: any) {
+      setIsLoading(false);
+      setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${error.message || 'Request failed.'}` }]);
+    }
   };
 
   const clearKnowledge = () => {
@@ -586,6 +582,47 @@ function App() {
     link.target = '_blank';
     link.rel = 'noreferrer';
     link.click();
+  };
+
+  const handleLogin = () => {
+    if (!chrome?.identity?.getAuthToken) {
+      console.warn('Chrome Identity API is not available.');
+      return;
+    }
+
+    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
+      if (chrome.runtime.lastError) {
+        console.error('Login failed:', chrome.runtime.lastError.message);
+        return;
+      }
+      
+      console.log('Google Token retrieved, sending to backend...');
+
+      try {
+        const response = await fetch('http://localhost:3000/api/auth', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('Successfully saved to Neon DB:', data.user);
+          setUser(data.user);
+          alert(`Welcome, ${data.user.name || data.user.email}! Database sync successful.`);
+          // In a future step, we can save this user object to a React state variable
+        } else {
+          console.error('Backend auth error:', data.error);
+          alert('Failed to verify with backend.');
+        }
+      } catch (error) {
+        console.error('Network error connecting to backend:', error);
+        alert('Could not connect to the Next.js backend. Is it running on port 3000?');
+      }
+    });
   };
 
   const showComposer = activeSidebarTab === 'chat';
@@ -1188,8 +1225,15 @@ function App() {
 
         {/* Profile Avatar Mock at bottom */}
         <div className="mb-4 mt-auto flex w-full justify-center">
-           <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100">
-             US
+           <div 
+             onClick={handleLogin}
+             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100 overflow-hidden"
+           >
+             {user?.image ? (
+               <img src={user.image} alt={user.name || "User"} className="h-full w-full object-cover" />
+             ) : (
+               'US'
+             )}
            </div>
         </div>
       </div>
