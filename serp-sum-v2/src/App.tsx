@@ -116,6 +116,10 @@ function App() {
   const [creatorError, setCreatorError] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
+  const [chatModel, setChatModel] = useState('gemini-3-flash');
+  const [creatorModel, setCreatorModel] = useState('gemini-3.1-flash-image-preview');
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -203,6 +207,7 @@ function App() {
         context: {
           origin: 'side-panel',
           thinkMode: isThinkModeEnabled,
+          model: chatModel,
         },
       },
       (res: ChatResponse) => {
@@ -550,6 +555,7 @@ function App() {
         prompt,
         style: creatorStyle,
         size: creatorSize,
+        model: creatorModel,
       },
       (res: ImageGenerationResponse) => {
         setIsGeneratingImage(false);
@@ -600,22 +606,22 @@ function App() {
     {
       id: 'knowledge',
       label: 'Knowledge',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><path d="M16 16s-1.5-2-4-2-4 2-4 2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 2v9l3-3 3 3V2"/></svg>,
     },
     {
       id: 'creator',
       label: 'Creator',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z" /><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /><line x1="2" y1="2" x2="22" y2="22" /></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
     },
     {
       id: 'translate',
       label: 'Translate',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>,
     },
     {
       id: 'settings',
       label: 'Settings',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
     },
   ];
 
@@ -859,6 +865,20 @@ function App() {
               </div>
 
               <div className={cx('rounded-2xl border p-4', isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white')}>
+                <select
+                  value={creatorModel}
+                  onChange={(event) => setCreatorModel(event.target.value)}
+                  className={cx(
+                    'mb-4 w-full rounded-xl border px-3 py-2.5 text-sm font-medium outline-none transition-colors appearance-none cursor-pointer',
+                    isDarkMode
+                      ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 focus:border-indigo-400'
+                      : 'border-indigo-200 bg-indigo-50 text-indigo-700 focus:border-indigo-400',
+                  )}
+                >
+                  <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Flash Image (Fast & Low Token)</option>
+                  <option value="dall-e-3">OpenAI DALL-E 3</option>
+                </select>
+
                 <label className={cx('mb-2 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Image Prompt</label>
                 <textarea
                   value={creatorPrompt}
@@ -1005,7 +1025,54 @@ function App() {
                   <button onClick={handleContextAction} title="Context" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg></button>
                   <button onClick={handleHistoryAction} title="History" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></button>
                 </div>
-                <div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                      className={cx(
+                        'flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors',
+                        isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      )}
+                    >
+                      <span className="whitespace-nowrap">
+                        {chatModel === 'gemini-3-flash' ? 'Flash' : 'GPT-4o'}
+                      </span>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+
+                    {isModelDropdownOpen && (
+                      <>
+                        {/* Invisible backdrop to close dropdown when clicking outside */}
+                        <div className="fixed inset-0 z-10" onClick={() => setIsModelDropdownOpen(false)} />
+                        
+                        <div className={cx(
+                          'absolute right-0 top-full z-20 mt-1.5 w-36 overflow-hidden rounded-xl border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] animate-in fade-in slide-in-from-top-1 duration-200',
+                          isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-white'
+                        )}>
+                          {[
+                            { id: 'gemini-3-flash', name: 'Gemini 3 Flash' },
+                            { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
+                          ].map((mod) => (
+                            <button
+                              key={mod.id}
+                              onClick={() => {
+                                setChatModel(mod.id);
+                                setIsModelDropdownOpen(false);
+                              }}
+                              className={cx(
+                                'w-full px-3 py-2 text-left text-[12px] font-semibold transition-colors',
+                                chatModel === mod.id
+                                  ? (isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600')
+                                  : (isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-50')
+                              )}
+                            >
+                              {mod.name}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <button onClick={handleAddAction} title="New Chat" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
                 </div>
               </div>
