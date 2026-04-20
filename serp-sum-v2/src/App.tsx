@@ -446,9 +446,6 @@ function App() {
     });
   };
 
-  const handleSettingsAction = () => {
-    setActiveSidebarTab('settings');
-  };
 
   const handleHistoryAction = () => {
     setActiveSidebarTab('knowledge');
@@ -588,10 +585,10 @@ function App() {
   const showComposer = activeSidebarTab === 'chat';
 
   const toolbarButtonClass = cx(
-    'rounded-md border p-2 shadow-sm transition',
+    'rounded-md p-1.5 transition text-gray-500',
     isDarkMode
-      ? 'border-transparent bg-slate-800/90 text-slate-300 hover:border-slate-600 hover:bg-slate-700 hover:text-slate-100'
-      : 'border-transparent bg-white/85 text-gray-600 hover:border-gray-200 hover:bg-white hover:text-gray-900',
+      ? 'hover:bg-slate-700 hover:text-slate-200'
+      : 'hover:bg-gray-200/70 hover:text-gray-800'
   );
 
   const sidebarItems: Array<{ id: SidebarTab; label: string; icon: React.ReactNode }> = [
@@ -626,19 +623,19 @@ function App() {
     <div className={cx(
       'flex h-screen w-full overflow-hidden font-ui',
       isDarkMode
-        ? 'bg-slate-950 text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-100'
-        : 'bg-[#f4f5f7] text-gray-900 selection:bg-indigo-100 selection:text-indigo-900',
+        ? 'bg-[#1e1e1e] text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-100'
+        : 'bg-[#f7f7f8] text-gray-900 selection:bg-indigo-100 selection:text-indigo-900',
     )}
     >
+      {/* Main Content Area */}
       <div className={cx(
-        'm-3 flex flex-1 flex-col overflow-hidden rounded-[24px] border',
-        isDarkMode
-          ? 'border-slate-700 bg-slate-900 shadow-[0_14px_30px_-22px_rgba(0,0,0,0.7)]'
-          : 'border-[#e2e5ea] bg-[#f7f8fb] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.55)]',
+        'flex flex-1 flex-col overflow-hidden',
+        isDarkMode ? 'bg-[#2b2b2b]' : 'bg-[#f7f7f8]'
       )}
       >
-        <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto px-6 py-6 pb-0">
-          {activeSidebarTab === 'knowledge' ? (
+        <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto px-5 py-6 pb-0">
+
+          {activeSidebarTab === 'knowledge' && (
             <div className="flex min-h-0 flex-1 flex-col p-2 pt-0 animate-in fade-in duration-300">
               <div className="mb-5 flex items-center justify-between">
                 <h2 className={cx('text-sm font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-200' : 'text-gray-800')}>Knowledge Space</h2>
@@ -740,7 +737,9 @@ function App() {
                 </div>
               )}
             </div>
-          ) : activeSidebarTab === 'settings' ? (
+          )}
+
+          {activeSidebarTab === 'settings' && (
             <div className="flex flex-1 flex-col gap-5 pb-10 animate-in fade-in duration-300">
               <div>
                 <h2 className={cx('mb-2 text-2xl font-bold tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Settings</h2>
@@ -774,7 +773,9 @@ function App() {
                 </p>
               </div>
             </div>
-          ) : activeSidebarTab === 'translate' ? (
+          )}
+
+          {activeSidebarTab === 'translate' && (
             <div className="flex flex-1 flex-col gap-5 pb-8 animate-in fade-in duration-300">
               <div>
                 <h2 className={cx('mb-2 text-2xl font-bold tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Translation Tools</h2>
@@ -848,7 +849,9 @@ function App() {
                 </div>
               )}
             </div>
-          ) : activeSidebarTab === 'creator' ? (
+          )}
+
+          {activeSidebarTab === 'creator' && (
             <div className="flex flex-1 flex-col gap-5 pb-8 animate-in fade-in duration-300">
               <div>
                 <h2 className={cx('mb-2 text-2xl font-bold tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Creator Studio</h2>
@@ -925,24 +928,40 @@ function App() {
                 </div>
               )}
             </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-1 flex-col justify-end pb-16 animate-in fade-in duration-500">
-              <h1 className={cx('text-[38px] font-semibold leading-[1.02] tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-900')}>Hi,</h1>
-              <h2 className={cx('mt-1 text-[24px] font-medium leading-[1.12] tracking-tight', isDarkMode ? 'text-slate-300' : 'text-gray-700')}>How can I assist you today?</h2>
+          )}
+
+          {activeSidebarTab === 'chat' && messages.length === 0 ? (
+            <div className="flex flex-1 flex-col justify-center px-4 pb-20 animate-in fade-in duration-500">
+              <h1 className={cx('text-[40px] font-bold leading-[1.1] tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-900')}>Hi,</h1>
+              <h2 className={cx('mt-2 text-[22px] font-semibold leading-[1.2] tracking-tight', isDarkMode ? 'text-slate-300' : 'text-gray-800')}>How can I assist you today?</h2>
+
+              {/* Added flex-row and items-center to force horizontal flow, and w-fit to buttons */}
+              <div className="mt-6 flex flex-row flex-wrap items-center justify-start gap-2.5">
+                {['Full Screen Chat', 'Deep Research', 'My Highlights', 'AI Slides'].map((chip) => (
+                  <button key={chip} className={cx(
+                    'flex w-fit items-center gap-2 rounded-xl border px-4 py-2 text-[14px] font-medium transition-colors',
+                    isDarkMode
+                      ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700'
+                      : 'border-[#e5e7eb] bg-white text-gray-700 hover:bg-gray-50'
+                  )}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /></svg>
+                    {chip}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : (
+          ) : activeSidebarTab === 'chat' && (
             <div className="flex-1 space-y-6 pb-4">
               {messages.map((msg, index) => (
                 <div key={index} className={cx('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                   <div className={cx(
-                    'max-w-[95%] rounded-2xl p-5 text-[16px] leading-relaxed shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)]',
+                    'max-w-[90%] rounded-2xl p-4 text-[15px] leading-relaxed',
                     msg.role === 'user'
-                      ? 'rounded-br-sm bg-indigo-600 text-white'
+                      ? 'bg-[#eef2ff] text-indigo-900 rounded-br-sm'
                       : isDarkMode
-                        ? 'rounded-bl-sm border border-slate-700 bg-slate-800 text-slate-100'
-                        : 'rounded-bl-sm border border-gray-100 bg-gray-50 text-gray-800',
-                  )}
-                  >
+                        ? 'bg-transparent text-slate-100'
+                        : 'bg-transparent text-gray-800',
+                  )}>
                     {msg.role === 'assistant' ? (
                       <MessageMarkdown content={msg.content} />
                     ) : (
@@ -953,15 +972,11 @@ function App() {
               ))}
 
               {isLoading && (
-                <div className="flex justify-start">
-                  <div className={cx(
-                    'flex items-center gap-1.5 rounded-2xl rounded-bl-sm border p-4 shadow-sm',
-                    isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-400' : 'border-gray-100 bg-gray-50 text-gray-400',
-                  )}
-                  >
-                    <span className={cx('h-2 w-2 animate-pulse rounded-full', isDarkMode ? 'bg-slate-400' : 'bg-gray-400')} />
-                    <span className={cx('h-2 w-2 animate-pulse rounded-full delay-150', isDarkMode ? 'bg-slate-400' : 'bg-gray-400')} />
-                    <span className={cx('h-2 w-2 animate-pulse rounded-full delay-300', isDarkMode ? 'bg-slate-400' : 'bg-gray-400')} />
+                <div className="flex justify-start px-4">
+                  <div className="flex items-center gap-1.5 p-2">
+                    <span className={cx('h-1.5 w-1.5 animate-pulse rounded-full', isDarkMode ? 'bg-slate-500' : 'bg-gray-400')} />
+                    <span className={cx('h-1.5 w-1.5 animate-pulse rounded-full delay-150', isDarkMode ? 'bg-slate-500' : 'bg-gray-400')} />
+                    <span className={cx('h-1.5 w-1.5 animate-pulse rounded-full delay-300', isDarkMode ? 'bg-slate-500' : 'bg-gray-400')} />
                   </div>
                 </div>
               )}
@@ -970,33 +985,28 @@ function App() {
         </div>
 
         {showComposer && (
-          <div className={cx(
-            'shrink-0 px-6 pb-5 pt-3',
-            isDarkMode ? 'bg-slate-900' : 'bg-[#f7f8fb]',
-          )}
-          >
+          <div className="shrink-0 px-4 pb-4 pt-2">
             <div className={cx(
-              'flex flex-col rounded-[24px] border transition-all',
+              'flex flex-col rounded-2xl transition-all',
               isDarkMode
-                ? 'border-slate-700 bg-slate-900 shadow-[0_4px_12px_rgba(0,0,0,0.25)] focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/25'
-                : 'border-[#d8dbe3] bg-[#f8f9fb] shadow-[0_4px_12px_rgba(15,23,42,0.06)] focus-within:border-[#b8c0f5] focus-within:ring-2 focus-within:ring-[#d8defd]',
-            )}
-            >
-              <div className="flex items-center justify-end p-3 pb-0">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileChange}
-                  accept=".txt,.md,.json,.csv,.js,.ts,.tsx,.html,.css"
-                />
-
-                <div className="flex items-center gap-1.5 pr-2">
-                  <button onClick={handleUploadAction} title="Upload" className={toolbarButtonClass}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
-                  <button onClick={handleContextAction} title="Context" className={toolbarButtonClass}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg></button>
-                  <button onClick={handleSettingsAction} title="Settings" className={toolbarButtonClass}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg></button>
-                  <button onClick={handleHistoryAction} title="History" className={toolbarButtonClass}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></button>
-                  <button onClick={handleAddAction} title="New Chat" className="mx-1 flex items-center gap-1.5 rounded-md bg-indigo-600 p-1.5 text-white shadow-sm transition hover:bg-indigo-700"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+                ? 'bg-[#333333]'
+                : 'bg-white',
+            )}>
+              <div className="flex items-center justify-between px-3 pt-2">
+                <div className="flex items-center gap-0.5">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    accept=".txt,.md,.json,.csv,.js,.ts,.tsx,.html,.css"
+                  />
+                  <button onClick={handleUploadAction} title="Upload" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
+                  <button onClick={handleContextAction} title="Context" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg></button>
+                  <button onClick={handleHistoryAction} title="History" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></button>
+                </div>
+                <div>
+                  <button onClick={handleAddAction} title="New Chat" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
                 </div>
               </div>
 
@@ -1010,42 +1020,42 @@ function App() {
                   }
                 }}
                 className={cx(
-                  'mt-1 min-h-[110px] max-h-[300px] w-full resize-none overflow-y-auto bg-transparent px-5 py-3 text-[16px] outline-none placeholder:font-normal',
-                  isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-gray-800 placeholder:text-gray-500',
+                  'mt-1 min-h-[60px] max-h-[300px] w-full resize-none overflow-y-auto bg-transparent px-4 py-2 text-[15px] outline-none placeholder:font-normal',
+                  isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-gray-800 placeholder:text-[#a1a1aa]',
                 )}
                 placeholder="Ask anything, @ models, / prompts"
               />
 
-              <div className="flex items-center justify-between p-4 pt-1">
-                <div className="flex gap-2.5">
+              <div className="flex items-center justify-between px-3 pb-3 pt-2">
+                <div className="flex gap-2">
                   <button
                     onClick={toggleThinkMode}
                     className={cx(
-                      'flex items-center gap-2 rounded-full border px-4 py-2 text-[14px] font-medium shadow-sm transition',
+                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
                       isThinkModeEnabled
-                        ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                        ? 'bg-indigo-50 text-indigo-700'
                         : isDarkMode
-                          ? 'border-slate-600 bg-slate-800 text-slate-300 hover:bg-slate-700'
-                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                          ? 'bg-transparent text-slate-300 hover:bg-slate-700'
+                          : 'bg-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100',
                     )}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-                    Think
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                    Innovate
                   </button>
 
                   <button
                     onClick={toggleVoiceMode}
                     className={cx(
-                      'flex items-center gap-2 rounded-full border px-4 py-2 text-[14px] font-medium shadow-sm transition',
+                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
                       isVoiceModeEnabled
-                        ? 'border-cyan-200 bg-cyan-50 text-cyan-700'
+                        ? 'bg-indigo-50 text-indigo-700'
                         : isDarkMode
-                          ? 'border-slate-600 bg-slate-800 text-slate-300 hover:bg-slate-700'
-                          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                          ? 'bg-transparent text-slate-300 hover:bg-slate-700'
+                          : 'bg-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100',
                     )}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                    {isVoiceModeEnabled ? 'Listening...' : 'Voice Mode'}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                    {isVoiceModeEnabled ? 'Listening' : 'Voice'}
                   </button>
                 </div>
 
@@ -1053,63 +1063,67 @@ function App() {
                   onClick={handleSubmit}
                   disabled={!inputText.trim() || isLoading}
                   className={cx(
-                    'rounded-full p-2.5 transition disabled:opacity-30 disabled:hover:bg-transparent',
+                    'rounded-full p-2 transition disabled:opacity-30',
                     isDarkMode
                       ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                      : 'text-gray-600 hover:bg-gray-200/70 hover:text-gray-900',
+                      : 'text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400',
                   )}
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
                 </button>
               </div>
             </div>
+
+
           </div>
         )}
       </div>
 
+      {/* Right Sidebar */}
       <div className={cx(
-        'relative flex w-[52px] flex-shrink-0 flex-col items-center border-l py-4',
-        isDarkMode ? 'border-slate-700 bg-slate-900' : 'border-[#dde1e8] bg-[#eceff4]',
-      )}
-      >
-        <div className={cx('mb-4 flex gap-2', isDarkMode ? 'text-slate-400' : 'text-gray-600')}>
-          <button onClick={() => window.close()} title="Close Side Panel" className={cx('rounded p-0.5 transition', isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200')}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg></button>
-          <button onClick={() => alert('Sidebar Expansion Coming Soon')} title="Expand" className={cx('rounded p-0.5 transition', isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200')}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg></button>
+        'relative flex w-[56px] flex-shrink-0 flex-col items-center py-4 border-l',
+        isDarkMode ? 'bg-[#1e1e1e] border-[#2b2b2b]' : 'bg-[#f7f7f8] border-gray-200/50',
+      )}>
+        <div className={cx('mb-6 flex gap-2', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>
+          <button onClick={() => window.close()} title="Close" className={cx('rounded p-1 transition', isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200')}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg></button>
+          <button onClick={() => alert('Expand')} title="Expand" className={cx('rounded p-1 transition', isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-200')}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></svg></button>
         </div>
 
-        <div className="mt-2 flex w-full flex-1 flex-col items-center gap-1">
+        <div className="mt-2 flex w-full flex-1 flex-col items-center gap-3">
           {sidebarItems.map((item) => (
             <button
               key={item.id}
               title={item.label}
               onClick={() => {
                 setActiveSidebarTab(item.id);
-                if (item.id === 'knowledge') {
-                  loadKnowledge();
-                }
+                if (item.id === 'knowledge') loadKnowledge();
               }}
               className={cx(
-                'group relative flex w-full flex-col items-center gap-1 py-1.5 transition',
+                'group relative flex w-full flex-col items-center py-1 transition-colors',
                 activeSidebarTab === item.id
-                  ? 'text-indigo-700'
+                  ? 'text-indigo-600'
                   : isDarkMode
-                    ? 'text-slate-400 hover:text-slate-100'
-                    : 'text-gray-600 hover:text-gray-900',
+                    ? 'text-slate-400 hover:text-slate-200'
+                    : 'text-gray-500 hover:text-gray-900',
               )}
             >
               <div className={cx(
-                'rounded-[10px] p-1.5 transition-all',
+                'rounded-lg p-2 transition-all',
                 activeSidebarTab === item.id
-                  ? 'bg-indigo-100 text-indigo-700 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.14)]'
-                  : isDarkMode
-                    ? 'bg-transparent text-slate-400 group-hover:bg-slate-700 group-hover:text-slate-100'
-                    : 'bg-transparent text-gray-600 group-hover:bg-gray-200/70 group-hover:text-gray-900',
-              )}
-              >
+                  ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-200')
+                  : 'bg-transparent group-hover:bg-gray-200/50',
+              )}>
                 {item.icon}
               </div>
             </button>
           ))}
+        </div>
+
+        {/* Profile Avatar Mock at bottom */}
+        <div className="mb-4 mt-auto flex w-full justify-center">
+           <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100">
+             US
+           </div>
         </div>
       </div>
     </div>
