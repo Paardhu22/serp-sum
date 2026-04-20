@@ -146,6 +146,39 @@ function App() {
     chrome.storage.local.set({ uiDarkMode: isDarkMode });
   }, [isDarkMode]);
 
+  // Auto-Login on Mount (Silent authentication)
+  useEffect(() => {
+    if (!chrome?.identity?.getAuthToken) {
+      return;
+    }
+
+    chrome.identity.getAuthToken({ interactive: false }, async (token) => {
+      if (chrome.runtime.lastError || !token) {
+        // Safe to ignore, user just hasn't granted permissions fully yet or token expired
+        return;
+      }
+      
+      console.log('Silent Google Token retrieved, verifying session...');
+
+      try {
+        const response = await fetch('http://localhost:3000/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.user) {
+          console.log('Successfully restored session from Neon DB:', data.user);
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Silent auto-login failed to connect to backend:', error);
+      }
+    });
+  }, []);
+
   const loadKnowledge = useCallback(() => {
     if (!chrome?.runtime?.sendMessage) {
       setKnowledgeError('Extension runtime is unavailable.');
@@ -173,6 +206,11 @@ function App() {
   }, []);
 
   const handleSubmit = async () => {
+    if (!user) {
+      alert("Please log in by clicking the profile avatar before sending messages!");
+      return;
+    }
+
     const trimmedInput = inputText.trim();
     if (!trimmedInput || isLoading) {
       return;
@@ -220,6 +258,76 @@ function App() {
         loadKnowledge();
       } else {
         setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${data.error || 'Failed to reach AI.'}` }]);
+      }
+    } catch (error: any) {
+      setIsLoading(false);
+      setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${error.message || 'Request failed.'}` }]);
+    }
+  };
+
+  const handleSummarizePage = async () => {
+    if (!user) {
+      alert("Please log in by clicking the profile avatar before summarizing pages!");
+      return;
+    }
+
+    if (!chrome?.tabs || !chrome?.scripting) {
+      alert("Chrome extension APIs are not available.");
+      return;
+    }
+
+    try {
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!activeTab || !activeTab.id) {
+        alert("Could not find the active tab.");
+        return;
+      }
+
+      // Inject script to scrape the page text
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        func: () => document.body.innerText,
+      });
+
+      const extractedText = results[0]?.result;
+      if (!extractedText || typeof extractedText !== 'string') {
+        alert("Could not extract text from the current page.");
+        return;
+      }
+
+      const truncatedText = extractedText.slice(0, 10000);
+      const promptText = `Please provide a comprehensive summary of the following page content:\n\n${truncatedText}`;
+
+      const userMsg: ChatMessage = { role: 'user', content: "Summarizing current page..." };
+      const nextHistory = [...messages, userMsg];
+      
+      setMessages(nextHistory);
+      setIsLoading(true);
+
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, { role: 'user', content: promptText }],
+          temperature: 0.62,
+          maxTokens: 650,
+          model: chatModel,
+          userId: user?.id,
+          chatId: currentChatId,
+        }),
+      });
+
+      const data = await response.json();
+      setIsLoading(false);
+
+      if (data.success && typeof data.reply === 'string') {
+        // Swap out the placeholder with actual prompt so it renders nicely when refreshed (though this session state is temporary)
+        setMessages([...messages, { role: 'user', content: "Summarizing current page..." }, { role: 'assistant', content: data.reply }]);
+        if (data.chatId) {
+          setCurrentChatId(data.chatId);
+        }
+      } else {
+        setMessages((prev) => [...prev, { role: 'assistant', content: `❌ Error: ${data.error || 'Failed to summarize page.'}` }]);
       }
     } catch (error: any) {
       setIsLoading(false);
@@ -1061,6 +1169,11 @@ function App() {
                   <button onClick={handleUploadAction} title="Upload" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
                   <button onClick={handleContextAction} title="Context" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg></button>
                   <button onClick={handleHistoryAction} title="History" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></button>
+                  
+                  <button onClick={handleSummarizePage} title="Summarize Page" className={cx(toolbarButtonClass, 'flex items-center gap-1.5 ml-2 border px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide uppercase', isDarkMode ? 'border-slate-700 hover:bg-slate-700' : 'border-gray-200 hover:bg-gray-100')}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                    Summarize Page
+                  </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="relative">
