@@ -1271,12 +1271,12 @@ function App() {
               {messages.map((msg, index) => (
                 <div key={index} className={cx('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                   <div className={cx(
-                    'max-w-[90%] rounded-2xl p-4 text-[15px] leading-relaxed',
+                    'max-w-[90%] rounded-2xl p-4 leading-relaxed',
                     msg.role === 'user'
-                      ? 'bg-[#eef2ff] text-indigo-900 rounded-br-sm'
+                      ? 'bg-[#eef2ff] text-indigo-900 rounded-br-sm font-sans text-sm'
                       : isDarkMode
-                        ? 'bg-transparent text-slate-100'
-                        : 'bg-transparent text-gray-800',
+                        ? 'bg-transparent text-slate-100 text-[14.5px]'
+                        : 'bg-transparent text-gray-800 text-[14.5px]',
                   )}>
                     {msg.role === 'assistant' ? (
                       <MessageMarkdown content={msg.content} />
