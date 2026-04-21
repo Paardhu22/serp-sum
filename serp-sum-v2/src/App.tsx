@@ -61,6 +61,10 @@ function formatTimestamp(isoDate: string): string {
   return asDate.toLocaleString();
 }
 
+// Set this to your live Vercel URL (exclude trailing slash)
+const BASE_URL = 'https://serp-sum.vercel.app';
+
+
 function App() {
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('chat');
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -143,11 +147,11 @@ function App() {
         // Safe to ignore, user just hasn't granted permissions fully yet or token expired
         return;
       }
-      
+
       console.log('Silent Google Token retrieved, verifying session...');
 
       try {
-        const response = await fetch('http://localhost:3000/api/auth', {
+        const response = await fetch(`${BASE_URL}/api/auth`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
@@ -175,9 +179,9 @@ function App() {
     setKnowledgeError('');
 
     try {
-      const response = await fetch(`http://localhost:3000/api/chat?userId=${user.id}`);
+      const response = await fetch(`${BASE_URL}/api/chat?userId=${user.id}`);
       const data = await response.json();
-      
+
       if (data.success && Array.isArray(data.chats)) {
         const items = data.chats.map((chat: any) => {
           const userMessage = chat.messages.find((m: any) => m.role === 'user');
@@ -230,7 +234,7 @@ function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/chat', {
+      const response = await fetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -299,11 +303,11 @@ function App() {
 
       const userMsg: ChatMessage = { role: 'user', content: "Summarizing current page..." };
       const nextHistory = [...messages, userMsg];
-      
+
       setMessages(nextHistory);
       setIsLoading(true);
 
-      const response = await fetch('http://localhost:3000/api/chat', {
+      const response = await fetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -595,7 +599,7 @@ function App() {
     setDetectedLanguage('');
 
     try {
-      const response = await fetch('http://localhost:3000/api/translate', {
+      const response = await fetch(`${BASE_URL}/api/translate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -646,7 +650,7 @@ function App() {
     setGeneratedImageUrl('');
 
     try {
-      const response = await fetch('http://localhost:3000/api/image', {
+      const response = await fetch(`${BASE_URL}/api/image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -698,11 +702,11 @@ function App() {
         console.error('Login failed:', chrome.runtime.lastError.message);
         return;
       }
-      
+
       console.log('Google Token retrieved, sending to backend...');
 
       try {
-        const response = await fetch('http://localhost:3000/api/auth', {
+        const response = await fetch(`${BASE_URL}/api/auth`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -783,17 +787,17 @@ function App() {
     {
       id: 'knowledge',
       label: 'Knowledge',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 2v9l3-3 3 3V2"/></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /><path d="M8 2v9l3-3 3 3V2" /></svg>,
     },
     {
       id: 'creator',
       label: 'Creator',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>,
     },
     {
       id: 'translate',
       label: 'Translate',
-      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>,
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>,
     },
     {
       id: 'settings',
@@ -889,8 +893,8 @@ function App() {
               ) : (
                 <div className="h-0 flex-1 space-y-4 overflow-y-auto pb-2 pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                   {filteredKnowledgeItems.map((item) => (
-                    <article 
-                      key={item.id} 
+                    <article
+                      key={item.id}
                       onClick={() => handleResumeChat(item)}
                       className={cx(
                         'cursor-pointer rounded-2xl border p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-md',
@@ -1003,7 +1007,7 @@ function App() {
                       )}
                     >
                       {translateTarget}
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={cx('transition-transform', isTranslateTargetOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={cx('transition-transform', isTranslateTargetOpen && 'rotate-180')}><path d="m6 9 6 6 6-6" /></svg>
                     </button>
 
                     {isTranslateTargetOpen && (
@@ -1093,7 +1097,7 @@ function App() {
                     )}
                   >
                     {creatorModel === 'gemini-3.1-flash-image-preview' ? 'Gemini 3.1 Flash Image' : 'OpenAI DALL-E 3'}
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={cx('transition-transform', isCreatorModelOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={cx('transition-transform', isCreatorModelOpen && 'rotate-180')}><path d="m6 9 6 6 6-6" /></svg>
                   </button>
 
                   {isCreatorModelOpen && (
@@ -1153,7 +1157,7 @@ function App() {
                       )}
                     >
                       {CREATOR_STYLES.find(s => s.value === creatorStyle)?.label || 'Select Style'}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform', isCreatorStyleOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform', isCreatorStyleOpen && 'rotate-180')}><path d="m6 9 6 6 6-6" /></svg>
                     </button>
 
                     {isCreatorStyleOpen && (
@@ -1196,7 +1200,7 @@ function App() {
                       )}
                     >
                       {IMAGE_SIZE_OPTIONS.find(s => s.value === creatorSize)?.label || 'Select Size'}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform', isCreatorSizeOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform', isCreatorSizeOpen && 'rotate-180')}><path d="m6 9 6 6 6-6" /></svg>
                     </button>
 
                     {isCreatorSizeOpen && (
@@ -1321,136 +1325,136 @@ function App() {
                   ? 'bg-[#333333]'
                   : 'bg-white',
               )}>
-              <div className="flex items-center justify-between px-3 pt-2">
-                <div className="flex items-center gap-0.5">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept=".txt,.md,.json,.csv,.js,.ts,.tsx,.html,.css"
-                  />
-                  <button onClick={handleUploadAction} title="Upload" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
-                  <button onClick={handleContextAction} title="Context" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg></button>
-                  <button onClick={handleHistoryAction} title="History" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></button>
+                <div className="flex items-center justify-between px-3 pt-2">
+                  <div className="flex items-center gap-0.5">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileChange}
+                      accept=".txt,.md,.json,.csv,.js,.ts,.tsx,.html,.css"
+                    />
+                    <button onClick={handleUploadAction} title="Upload" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></button>
+                    <button onClick={handleContextAction} title="Context" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg></button>
+                    <button onClick={handleHistoryAction} title="History" className={toolbarButtonClass}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg></button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                        className={cx(
+                          'flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors',
+                          isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                        )}
+                      >
+                        <span className="whitespace-nowrap">
+                          {chatModel === 'gemini-3-flash' ? 'Flash' : 'GPT-4o'}
+                        </span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m6 9 6 6 6-6" /></svg>
+                      </button>
+
+                      {isModelDropdownOpen && (
+                        <>
+                          {/* Invisible backdrop to close dropdown when clicking outside */}
+                          <div className="fixed inset-0 z-10" onClick={() => setIsModelDropdownOpen(false)} />
+
+                          <div className={cx(
+                            'absolute right-0 top-full z-20 mt-1.5 w-36 overflow-hidden rounded-xl border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] animate-in fade-in slide-in-from-top-1 duration-200',
+                            isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-white'
+                          )}>
+                            {[
+                              { id: 'gemini-3-flash', name: 'Gemini 3 Flash' },
+                              { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
+                            ].map((mod) => (
+                              <button
+                                key={mod.id}
+                                onClick={() => {
+                                  setChatModel(mod.id);
+                                  setIsModelDropdownOpen(false);
+                                }}
+                                className={cx(
+                                  'w-full px-3 py-2 text-left text-[12px] font-semibold transition-colors',
+                                  chatModel === mod.id
+                                    ? (isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600')
+                                    : (isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-50')
+                                )}
+                              >
+                                {mod.name}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <button onClick={handleAddAction} title="New Chat" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
+
+                <textarea
+                  value={inputText}
+                  onChange={(event) => setInputText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                  className={cx(
+                    'mt-1 min-h-[60px] max-h-[300px] w-full resize-none overflow-y-auto bg-transparent px-4 py-2 text-[15px] outline-none placeholder:font-normal',
+                    isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-gray-800 placeholder:text-[#a1a1aa]',
+                  )}
+                  placeholder="Ask anything, @ models, / prompts"
+                />
+
+                <div className="flex items-center justify-between px-3 pb-3 pt-2">
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                      onClick={toggleThinkMode}
                       className={cx(
-                        'flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition-colors',
-                        isDarkMode ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                        'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
+                        isThinkModeEnabled
+                          ? 'bg-indigo-50 text-indigo-700'
+                          : isDarkMode
+                            ? 'bg-transparent text-slate-300 hover:bg-slate-700'
+                            : 'bg-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100',
                       )}
                     >
-                      <span className="whitespace-nowrap">
-                        {chatModel === 'gemini-3-flash' ? 'Flash' : 'GPT-4o'}
-                      </span>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m6 9 6 6 6-6"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                      Innovate
                     </button>
 
-                    {isModelDropdownOpen && (
-                      <>
-                        {/* Invisible backdrop to close dropdown when clicking outside */}
-                        <div className="fixed inset-0 z-10" onClick={() => setIsModelDropdownOpen(false)} />
-                        
-                        <div className={cx(
-                          'absolute right-0 top-full z-20 mt-1.5 w-36 overflow-hidden rounded-xl border shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] animate-in fade-in slide-in-from-top-1 duration-200',
-                          isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-white'
-                        )}>
-                          {[
-                            { id: 'gemini-3-flash', name: 'Gemini 3 Flash' },
-                            { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
-                          ].map((mod) => (
-                            <button
-                              key={mod.id}
-                              onClick={() => {
-                                setChatModel(mod.id);
-                                setIsModelDropdownOpen(false);
-                              }}
-                              className={cx(
-                                'w-full px-3 py-2 text-left text-[12px] font-semibold transition-colors',
-                                chatModel === mod.id
-                                  ? (isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-600')
-                                  : (isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-50')
-                              )}
-                            >
-                              {mod.name}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
+                    <button
+                      onClick={toggleVoiceMode}
+                      className={cx(
+                        'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
+                        isVoiceModeEnabled
+                          ? 'bg-indigo-50 text-indigo-700'
+                          : isDarkMode
+                            ? 'bg-transparent text-slate-300 hover:bg-slate-700'
+                            : 'bg-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+                      )}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
+                      {isVoiceModeEnabled ? 'Listening' : 'Voice'}
+                    </button>
                   </div>
-                  <button onClick={handleAddAction} title="New Chat" className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md transition"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg></button>
-                </div>
-              </div>
-
-              <textarea
-                value={inputText}
-                onChange={(event) => setInputText(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    handleSubmit();
-                  }
-                }}
-                className={cx(
-                  'mt-1 min-h-[60px] max-h-[300px] w-full resize-none overflow-y-auto bg-transparent px-4 py-2 text-[15px] outline-none placeholder:font-normal',
-                  isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-gray-800 placeholder:text-[#a1a1aa]',
-                )}
-                placeholder="Ask anything, @ models, / prompts"
-              />
-
-              <div className="flex items-center justify-between px-3 pb-3 pt-2">
-                <div className="flex gap-2">
-                  <button
-                    onClick={toggleThinkMode}
-                    className={cx(
-                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
-                      isThinkModeEnabled
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : isDarkMode
-                          ? 'bg-transparent text-slate-300 hover:bg-slate-700'
-                          : 'bg-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100',
-                    )}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-                    Innovate
-                  </button>
 
                   <button
-                    onClick={toggleVoiceMode}
+                    onClick={handleSubmit}
+                    disabled={!inputText.trim() || isLoading}
                     className={cx(
-                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
-                      isVoiceModeEnabled
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : isDarkMode
-                          ? 'bg-transparent text-slate-300 hover:bg-slate-700'
-                          : 'bg-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+                      'rounded-full p-2 transition disabled:opacity-30',
+                      isDarkMode
+                        ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        : 'text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400',
                     )}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                    {isVoiceModeEnabled ? 'Listening' : 'Voice'}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
                   </button>
                 </div>
-
-                <button
-                  onClick={handleSubmit}
-                  disabled={!inputText.trim() || isLoading}
-                  className={cx(
-                    'rounded-full p-2 transition disabled:opacity-30',
-                    isDarkMode
-                      ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                      : 'text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400',
-                  )}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
-                </button>
               </div>
             </div>
           </div>
-        </div>
         )}
       </div>
 
@@ -1496,16 +1500,16 @@ function App() {
 
         {/* Profile Avatar Mock at bottom */}
         <div className="mb-4 mt-auto flex w-full justify-center">
-           <div 
-             onClick={handleLogin}
-             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100 overflow-hidden"
-           >
-             {user?.image ? (
-               <img src={user.image} alt={user.name || "User"} className="h-full w-full object-cover" />
-             ) : (
-               'US'
-             )}
-           </div>
+          <div
+            onClick={handleLogin}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100 overflow-hidden"
+          >
+            {user?.image ? (
+              <img src={user.image} alt={user.name || "User"} className="h-full w-full object-cover" />
+            ) : (
+              'US'
+            )}
+          </div>
         </div>
       </div>
     </div>
