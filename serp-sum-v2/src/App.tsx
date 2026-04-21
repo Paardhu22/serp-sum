@@ -2,25 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MessageMarkdown } from './components/MessageMarkdown';
 import type { ChatMessage, KnowledgeItem } from './shared/types';
 
-interface TranslationResponse {
-  success?: boolean;
-  translatedText?: string;
-  detectedLanguage?: string;
-  error?: string;
-}
 
-interface ImageGenerationResponse {
-  success?: boolean;
-  imageDataUrl?: string;
-  imageUrl?: string;
-  error?: string;
-}
-
-interface KnowledgeResponse {
-  success?: boolean;
-  items?: KnowledgeItem[];
-  error?: string;
-}
 
 interface DefaultResponse {
   success?: boolean;
@@ -183,31 +165,44 @@ function App() {
     });
   }, []);
 
-  const loadKnowledge = useCallback(() => {
-    if (!chrome?.runtime?.sendMessage) {
-      setKnowledgeError('Extension runtime is unavailable.');
+  const loadKnowledge = useCallback(async () => {
+    if (!user) {
+      setKnowledgeError('Please log in to view your chat history.');
       return;
     }
 
     setIsKnowledgeLoading(true);
     setKnowledgeError('');
 
-    chrome.runtime.sendMessage({ type: 'GET_KNOWLEDGE' }, (res: KnowledgeResponse) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/chat?userId=${user.id}`);
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.chats)) {
+        const items = data.chats.map((chat: any) => {
+          const userMessage = chat.messages.find((m: any) => m.role === 'user');
+          const assistantMessage = chat.messages.find((m: any) => m.role === 'assistant');
+          return {
+            id: chat.id,
+            createdAt: chat.createdAt,
+            kind: 'chat',
+            title: chat.title || 'Chat',
+            prompt: userMessage?.content || '...',
+            response: assistantMessage?.content || 'No response yet.',
+            source: { origin: 'side-panel' },
+            messages: chat.messages
+          } as any;
+        });
+        setKnowledgeItems(items);
+      } else {
+        setKnowledgeError(data.error || 'Could not load your history.');
+      }
+    } catch (e: any) {
+      setKnowledgeError(e.message || 'Error fetching history.');
+    } finally {
       setIsKnowledgeLoading(false);
-
-      if (chrome.runtime.lastError) {
-        setKnowledgeError(chrome.runtime.lastError.message || 'Failed to load knowledge.');
-        return;
-      }
-
-      if (res?.success && Array.isArray(res.items)) {
-        setKnowledgeItems(res.items);
-        return;
-      }
-
-      setKnowledgeError(res?.error || 'Could not load saved knowledge.');
-    });
-  }, []);
+    }
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!user) {
@@ -588,14 +583,9 @@ function App() {
     void startVoiceRecognition();
   };
 
-  const handleTranslate = () => {
+  const handleTranslate = async () => {
     const text = translateInput.trim();
     if (!text || isTranslating) {
-      return;
-    }
-
-    if (!chrome?.runtime?.sendMessage) {
-      setTranslationError('Extension runtime is unavailable.');
       return;
     }
 
@@ -604,30 +594,33 @@ function App() {
     setTranslatedOutput('');
     setDetectedLanguage('');
 
-    chrome.runtime.sendMessage(
-      {
-        type: 'TRANSLATE_TEXT',
-        text,
-        targetLanguage: translateTarget,
-        sourceLanguage: 'auto',
-      },
-      (res: TranslationResponse) => {
-        setIsTranslating(false);
+    try {
+      const response = await fetch('http://localhost:3000/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          targetLanguage: translateTarget,
+          sourceLanguage: 'auto',
+          userId: user?.id,
+        }),
+      });
 
-        if (chrome.runtime.lastError) {
-          setTranslationError(chrome.runtime.lastError.message || 'Translation request failed.');
-          return;
-        }
+      const res = await response.json();
+      setIsTranslating(false);
 
-        if (res?.success && typeof res.translatedText === 'string') {
-          setTranslatedOutput(res.translatedText);
-          setDetectedLanguage(res.detectedLanguage || 'Auto-detected');
-          return;
-        }
-
+      if (res?.success && typeof res.translatedText === 'string') {
+        setTranslatedOutput(res.translatedText);
+        setDetectedLanguage(res.detectedLanguage || 'Auto-detected');
+      } else {
         setTranslationError(res?.error || 'Could not translate this text.');
-      },
-    );
+      }
+    } catch (err: any) {
+      setIsTranslating(false);
+      setTranslationError(err.message || 'Translation request failed.');
+    }
   };
 
   const handleCopyTranslation = async () => {
@@ -642,14 +635,9 @@ function App() {
     }
   };
 
-  const handleGenerateImage = () => {
+  const handleGenerateImage = async () => {
     const prompt = creatorPrompt.trim();
     if (!prompt || isGeneratingImage) {
-      return;
-    }
-
-    if (!chrome?.runtime?.sendMessage) {
-      setCreatorError('Extension runtime is unavailable.');
       return;
     }
 
@@ -657,30 +645,33 @@ function App() {
     setCreatorError('');
     setGeneratedImageUrl('');
 
-    chrome.runtime.sendMessage(
-      {
-        type: 'GENERATE_IMAGE',
-        prompt,
-        style: creatorStyle,
-        size: creatorSize,
-        model: creatorModel,
-      },
-      (res: ImageGenerationResponse) => {
-        setIsGeneratingImage(false);
+    try {
+      const response = await fetch('http://localhost:3000/api/image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          style: creatorStyle,
+          size: creatorSize,
+          model: creatorModel,
+          userId: user?.id,
+        }),
+      });
 
-        if (chrome.runtime.lastError) {
-          setCreatorError(chrome.runtime.lastError.message || 'Image generation failed.');
-          return;
-        }
+      const res = await response.json();
+      setIsGeneratingImage(false);
 
-        if (res?.success && (typeof res.imageDataUrl === 'string' || typeof res.imageUrl === 'string')) {
-          setGeneratedImageUrl(res.imageDataUrl || res.imageUrl || '');
-          return;
-        }
-
+      if (res?.success && (typeof res.imageDataUrl === 'string' || typeof res.imageUrl === 'string')) {
+        setGeneratedImageUrl(res.imageDataUrl || res.imageUrl || '');
+      } else {
         setCreatorError(res?.error || 'Image generation failed.');
-      },
-    );
+      }
+    } catch (err: any) {
+      setIsGeneratingImage(false);
+      setCreatorError(err.message || 'Image generation failed.');
+    }
   };
 
   const handleDownloadGeneratedImage = () => {
@@ -735,6 +726,43 @@ function App() {
         alert('Could not connect to the Next.js backend. Is it running on port 3000?');
       }
     });
+  };
+
+  const handleLogout = () => {
+    if (!chrome?.identity?.getAuthToken) {
+      console.warn('Chrome Identity API is not available.');
+      return;
+    }
+
+    chrome.identity.getAuthToken({ interactive: false }, async (token) => {
+      if (token) {
+        try {
+          await fetch('https://accounts.google.com/o/oauth2/revoke?token=' + token);
+        } catch (error) {
+          console.error('Error revoking token:', error);
+        }
+        chrome.identity.removeCachedAuthToken({ token: token as string }, () => {
+          setUser(null);
+          setCurrentChatId(null);
+        });
+      } else {
+        setUser(null);
+        setCurrentChatId(null);
+      }
+    });
+  };
+
+  const handleResumeChat = (chat: any) => {
+    setCurrentChatId(chat.id);
+    if (chat.messages && Array.isArray(chat.messages)) {
+      setMessages(chat.messages.map((m: any) => ({ role: m.role, content: m.content })));
+    } else {
+      setMessages([
+        { role: 'user', content: chat.prompt },
+        { role: 'assistant', content: chat.response }
+      ]);
+    }
+    setActiveSidebarTab('chat');
   };
 
   const showComposer = activeSidebarTab === 'chat';
@@ -809,7 +837,7 @@ function App() {
               </div>
 
               <p className={cx('mb-4 text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>
-                Your saved insights and responses are stored locally on this device.
+                Your chat history is securely synced to the cloud.
               </p>
 
               <div className="relative mb-5">
@@ -861,10 +889,13 @@ function App() {
               ) : (
                 <div className="h-0 flex-1 space-y-4 overflow-y-auto pb-2 pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                   {filteredKnowledgeItems.map((item) => (
-                    <article key={item.id} className={cx(
-                      'rounded-2xl border p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-md',
-                      isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-white',
-                    )}
+                    <article 
+                      key={item.id} 
+                      onClick={() => handleResumeChat(item)}
+                      className={cx(
+                        'cursor-pointer rounded-2xl border p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-md',
+                        isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-100 bg-white',
+                      )}
                     >
                       <div className="mb-3 flex items-start justify-between">
                         <h3 className={cx('pr-4 text-[15px] font-bold leading-tight', isDarkMode ? 'text-slate-100' : 'text-gray-900')}>{item.title}</h3>
@@ -927,6 +958,15 @@ function App() {
                   When enabled in Chat, responses use a deeper reasoning profile with a minimum 15-second thinking window.
                 </p>
               </div>
+
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="w-full py-2 mt-4 text-sm font-medium text-red-500 transition-colors bg-red-500/10 rounded-lg hover:bg-red-500/20"
+                >
+                  Log Out
+                </button>
+              )}
             </div>
           )}
 
