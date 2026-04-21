@@ -113,6 +113,10 @@ function App() {
   const [chatModel, setChatModel] = useState('gemini-3-flash');
   const [creatorModel, setCreatorModel] = useState('gemini-3.1-flash-image-preview');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [isCreatorModelOpen, setIsCreatorModelOpen] = useState(false);
+  const [isCreatorStyleOpen, setIsCreatorStyleOpen] = useState(false);
+  const [isCreatorSizeOpen, setIsCreatorSizeOpen] = useState(false);
+  const [isTranslateTargetOpen, setIsTranslateTargetOpen] = useState(false);
 
   const [user, setUser] = useState<any>(null);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -948,20 +952,48 @@ function App() {
                 />
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <select
-                    value={translateTarget}
-                    onChange={(event) => setTranslateTarget(event.target.value)}
-                    className={cx(
-                      'rounded-lg border px-3 py-2 text-sm outline-none',
-                      isDarkMode
-                        ? 'border-slate-600 bg-slate-900 text-slate-100'
-                        : 'border-gray-200 bg-white text-gray-700',
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsTranslateTargetOpen(!isTranslateTargetOpen)}
+                      className={cx(
+                        'flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all backdrop-blur-md',
+                        isDarkMode
+                          ? 'bg-black/40 border-gray-700 text-slate-200 hover:bg-black/60'
+                          : 'bg-white/10 border-white/20 text-gray-700 hover:bg-white/20'
+                      )}
+                    >
+                      {translateTarget}
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={cx('transition-transform', isTranslateTargetOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+
+                    {isTranslateTargetOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setIsTranslateTargetOpen(false)} />
+                        <div className={cx(
+                          'absolute bottom-full left-0 z-20 mb-2 max-h-60 w-48 overflow-y-auto rounded-lg border shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-1 duration-200',
+                          isDarkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/70 border-white/30'
+                        )}>
+                          {TRANSLATE_TARGETS.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setTranslateTarget(option.value);
+                                setIsTranslateTargetOpen(false);
+                              }}
+                              className={cx(
+                                'w-full px-4 py-2 text-left text-sm transition-colors',
+                                translateTarget === option.value
+                                  ? (isDarkMode ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-100 text-purple-700')
+                                  : (isDarkMode ? 'text-slate-200 hover:bg-purple-500/20 hover:text-purple-400' : 'text-gray-700 hover:bg-purple-500/10 hover:text-purple-500')
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
                     )}
-                  >
-                    {TRANSLATE_TARGETS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  </div>
 
                   <button
                     onClick={handleTranslate}
@@ -1010,19 +1042,51 @@ function App() {
               </div>
 
               <div className={cx('rounded-2xl border p-4', isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white')}>
-                <select
-                  value={creatorModel}
-                  onChange={(event) => setCreatorModel(event.target.value)}
-                  className={cx(
-                    'mb-4 w-full rounded-xl border px-3 py-2.5 text-sm font-medium outline-none transition-colors appearance-none cursor-pointer',
-                    isDarkMode
-                      ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 focus:border-indigo-400'
-                      : 'border-indigo-200 bg-indigo-50 text-indigo-700 focus:border-indigo-400',
+                <div className="relative mb-4">
+                  <button
+                    onClick={() => setIsCreatorModelOpen(!isCreatorModelOpen)}
+                    className={cx(
+                      'flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-sm font-medium transition-all backdrop-blur-md',
+                      isDarkMode
+                        ? 'bg-black/40 border-gray-700 text-indigo-300 hover:bg-black/60'
+                        : 'bg-white/10 border-white/20 text-indigo-700 hover:bg-white/20'
+                    )}
+                  >
+                    {creatorModel === 'gemini-3.1-flash-image-preview' ? 'Gemini 3.1 Flash Image' : 'OpenAI DALL-E 3'}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={cx('transition-transform', isCreatorModelOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+
+                  {isCreatorModelOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsCreatorModelOpen(false)} />
+                      <div className={cx(
+                        'absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-lg border shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-200',
+                        isDarkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/70 border-white/30'
+                      )}>
+                        {[
+                          { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash Image (Fast & Low Token)' },
+                          { id: 'dall-e-3', name: 'OpenAI DALL-E 3' }
+                        ].map((mod) => (
+                          <button
+                            key={mod.id}
+                            onClick={() => {
+                              setCreatorModel(mod.id);
+                              setIsCreatorModelOpen(false);
+                            }}
+                            className={cx(
+                              'w-full px-4 py-2.5 text-left text-sm transition-colors',
+                              creatorModel === mod.id
+                                ? (isDarkMode ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-100 text-purple-700')
+                                : (isDarkMode ? 'text-slate-200 hover:bg-purple-500/20 hover:text-purple-400' : 'text-gray-700 hover:bg-purple-500/10 hover:text-purple-500')
+                            )}
+                          >
+                            {mod.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
-                >
-                  <option value="gemini-3.1-flash-image-preview">Gemini 3.1 Flash Image (Fast & Low Token)</option>
-                  <option value="dall-e-3">OpenAI DALL-E 3</option>
-                </select>
+                </div>
 
                 <label className={cx('mb-2 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Image Prompt</label>
                 <textarea
@@ -1038,31 +1102,91 @@ function App() {
                 />
 
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <select
-                    value={creatorStyle}
-                    onChange={(event) => setCreatorStyle(event.target.value)}
-                    className={cx(
-                      'rounded-lg border px-3 py-2 text-sm outline-none',
-                      isDarkMode ? 'border-slate-600 bg-slate-900 text-slate-100' : 'border-gray-200 bg-white text-gray-700',
-                    )}
-                  >
-                    {CREATOR_STYLES.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsCreatorStyleOpen(!isCreatorStyleOpen)}
+                      className={cx(
+                        'flex w-full items-center justify-between rounded-lg border px-4 py-2 text-sm font-medium transition-all backdrop-blur-md',
+                        isDarkMode
+                          ? 'bg-black/40 border-gray-700 text-slate-200 hover:bg-black/60'
+                          : 'bg-white/10 border-white/20 text-gray-700 hover:bg-white/20'
+                      )}
+                    >
+                      {CREATOR_STYLES.find(s => s.value === creatorStyle)?.label || 'Select Style'}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform', isCreatorStyleOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
 
-                  <select
-                    value={creatorSize}
-                    onChange={(event) => setCreatorSize(event.target.value as ImageSize)}
-                    className={cx(
-                      'rounded-lg border px-3 py-2 text-sm outline-none',
-                      isDarkMode ? 'border-slate-600 bg-slate-900 text-slate-100' : 'border-gray-200 bg-white text-gray-700',
+                    {isCreatorStyleOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setIsCreatorStyleOpen(false)} />
+                        <div className={cx(
+                          'absolute bottom-full left-0 z-20 mb-2 w-full overflow-hidden rounded-lg border shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-1 duration-200',
+                          isDarkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/70 border-white/30'
+                        )}>
+                          {CREATOR_STYLES.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setCreatorStyle(option.value);
+                                setIsCreatorStyleOpen(false);
+                              }}
+                              className={cx(
+                                'w-full px-4 py-2 text-left text-sm transition-colors',
+                                creatorStyle === option.value
+                                  ? (isDarkMode ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-100 text-purple-700')
+                                  : (isDarkMode ? 'text-slate-200 hover:bg-purple-500/20 hover:text-purple-400' : 'text-gray-700 hover:bg-purple-500/10 hover:text-purple-500')
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
                     )}
-                  >
-                    {IMAGE_SIZE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  </div>
+
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsCreatorSizeOpen(!isCreatorSizeOpen)}
+                      className={cx(
+                        'flex w-full items-center justify-between rounded-lg border px-4 py-2 text-sm font-medium transition-all backdrop-blur-md',
+                        isDarkMode
+                          ? 'bg-black/40 border-gray-700 text-slate-200 hover:bg-black/60'
+                          : 'bg-white/10 border-white/20 text-gray-700 hover:bg-white/20'
+                      )}
+                    >
+                      {IMAGE_SIZE_OPTIONS.find(s => s.value === creatorSize)?.label || 'Select Size'}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform', isCreatorSizeOpen && 'rotate-180')}><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+
+                    {isCreatorSizeOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setIsCreatorSizeOpen(false)} />
+                        <div className={cx(
+                          'absolute bottom-full left-0 z-20 mb-2 w-full overflow-hidden rounded-lg border shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-1 duration-200',
+                          isDarkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/70 border-white/30'
+                        )}>
+                          {IMAGE_SIZE_OPTIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setCreatorSize(option.value);
+                                setIsCreatorSizeOpen(false);
+                              }}
+                              className={cx(
+                                'w-full px-4 py-2 text-left text-sm transition-colors',
+                                creatorSize === option.value
+                                  ? (isDarkMode ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-100 text-purple-700')
+                                  : (isDarkMode ? 'text-slate-200 hover:bg-purple-500/20 hover:text-purple-400' : 'text-gray-700 hover:bg-purple-500/10 hover:text-purple-500')
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <button
@@ -1100,20 +1224,7 @@ function App() {
               <h1 className={cx('text-[40px] font-bold leading-[1.1] tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-900')}>Hi,</h1>
               <h2 className={cx('mt-2 text-[22px] font-semibold leading-[1.2] tracking-tight', isDarkMode ? 'text-slate-300' : 'text-gray-800')}>How can I assist you today?</h2>
 
-              {/* Added flex-row and items-center to force horizontal flow, and w-fit to buttons */}
-              <div className="mt-6 flex flex-row flex-wrap items-center justify-start gap-2.5">
-                {['Full Screen Chat', 'Deep Research', 'My Highlights', 'AI Slides'].map((chip) => (
-                  <button key={chip} className={cx(
-                    'flex w-fit items-center gap-2 rounded-xl border px-4 py-2 text-[14px] font-medium transition-colors',
-                    isDarkMode
-                      ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700'
-                      : 'border-[#e5e7eb] bg-white text-gray-700 hover:bg-gray-50'
-                  )}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="9" y1="3" x2="9" y2="21" /></svg>
-                    {chip}
-                  </button>
-                ))}
-              </div>
+
             </div>
           ) : activeSidebarTab === 'chat' && (
             <div className="flex-1 space-y-6 pb-4">
