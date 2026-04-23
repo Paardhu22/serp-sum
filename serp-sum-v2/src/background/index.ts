@@ -363,6 +363,17 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
       return true;
     }
 
+    if ((message as any).action === 'OPEN_SIDEBAR') {
+      if (_sender.tab?.id) {
+        chrome.sidePanel.open({ tabId: _sender.tab.id })
+          .then(() => sendResponse({ success: true }))
+          .catch((err) => sendResponse({ success: false, error: err.message }));
+      } else {
+        sendResponse({ success: false, error: 'No tab id' });
+      }
+      return true;
+    }
+
     const unknownType = (message as { type?: string }).type;
     console.warn('[BG] Unknown message type:', unknownType);
     sendResponse({ success: false, error: 'Unknown message type' });

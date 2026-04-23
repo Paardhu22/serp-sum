@@ -52,5 +52,15 @@
   ],
   "side_panel": {
     "default_path": "index.html"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }
