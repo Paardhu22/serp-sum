@@ -14,7 +14,7 @@ export const FloatingTrigger: React.FC<FloatingTriggerProps> = ({ onClick }) => 
       onMouseLeave={() => setIsHovered(false)}
       style={{
         position: 'fixed',
-        top: '50%',
+        top: '85%',
         transform: 'translateY(-50%)',
         right: 0,
         zIndex: 2147483647,
