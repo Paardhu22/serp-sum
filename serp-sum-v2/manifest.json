@@ -24,7 +24,9 @@
     "scripting",
     "sidePanel",
     "identity",
-    "identity.email"
+    "identity.email",
+    "alarms",
+    "notifications"
   ],
   "oauth2": {
     "client_id": "1003299289489-i4ifnhaqm2luubib87senqdj07fhmgcg.apps.googleusercontent.com",

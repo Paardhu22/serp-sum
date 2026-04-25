@@ -9,7 +9,7 @@ interface DefaultResponse {
   error?: string;
 }
 
-type SidebarTab = 'chat' | 'knowledge' | 'creator' | 'translate' | 'settings';
+type SidebarTab = 'chat' | 'knowledge' | 'creator' | 'translate' | 'settings' | 'tasks';
 type ImageSize = '1024x1024' | '1024x1536' | '1536x1024';
 
 type TranslateTarget = {
@@ -21,6 +21,13 @@ type CreatorStyle = {
   label: string;
   value: string;
 };
+
+interface Task {
+  id: string;
+  title: string;
+  triggerTime: number;
+  frequency: 'once' | 'daily';
+}
 
 const TRANSLATE_TARGETS: TranslateTarget[] = [
   { label: 'English', value: 'English' },
@@ -104,6 +111,11 @@ function App() {
   const [isCreatorSizeOpen, setIsCreatorSizeOpen] = useState(false);
   const [isTranslateTargetOpen, setIsTranslateTargetOpen] = useState(false);
 
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('');
+  const [newTaskFrequency, setNewTaskFrequency] = useState<'once' | 'daily'>('once');
+
   const [user, setUser] = useState<any>(null);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
@@ -135,6 +147,29 @@ function App() {
 
     chrome.storage.local.set({ uiDarkMode: isDarkMode });
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (!chrome?.storage?.local) return;
+    chrome.storage.local.get(['tasks'], (result) => {
+      if (result.tasks) {
+        setTasks(result.tasks as Task[]);
+      }
+    });
+
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.tasks) {
+        setTasks((changes.tasks.newValue as Task[]) || []);
+      }
+    };
+    if (chrome?.storage?.onChanged) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+    }
+    return () => {
+      if (chrome?.storage?.onChanged) {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      }
+    };
+  }, []);
 
   // Auto-Login on Mount (Silent authentication)
   useEffect(() => {
@@ -769,6 +804,57 @@ function App() {
     setActiveSidebarTab('chat');
   };
 
+  const handleCreateTask = async () => {
+    if (!newTaskTitle.trim() || !newTaskTime) return;
+    const [hours, minutes] = newTaskTime.split(':').map(Number);
+    const now = new Date();
+    // Create a date object for today with the specified time
+    const triggerDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0);
+    
+    // If that time has already passed today, schedule it for tomorrow
+    if (triggerDate.getTime() <= now.getTime()) {
+      triggerDate.setDate(triggerDate.getDate() + 1);
+    }
+    
+    const timestamp = triggerDate.getTime();
+    
+    const newTask: Task = {
+      id: Date.now().toString(),
+      title: newTaskTitle.trim(),
+      triggerTime: timestamp,
+      frequency: newTaskFrequency
+    };
+
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    
+    if (chrome?.storage?.local) {
+      await chrome.storage.local.set({ tasks: updatedTasks });
+    }
+    if (chrome?.alarms) {
+      chrome.alarms.create(newTask.id, {
+        when: timestamp,
+        periodInMinutes: newTask.frequency === 'daily' ? 1440 : undefined
+      });
+    }
+
+    setNewTaskTitle('');
+    setNewTaskTime('');
+    setNewTaskFrequency('once');
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    const updatedTasks = tasks.filter(t => t.id !== id);
+    setTasks(updatedTasks);
+    
+    if (chrome?.storage?.local) {
+      await chrome.storage.local.set({ tasks: updatedTasks });
+    }
+    if (chrome?.alarms) {
+      chrome.alarms.clear(id);
+    }
+  };
+
   const showComposer = activeSidebarTab === 'chat';
 
   const toolbarButtonClass = cx(
@@ -798,6 +884,11 @@ function App() {
       id: 'translate',
       label: 'Translate',
       icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>,
+    },
+    {
+      id: 'tasks',
+      label: 'Tasks',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>,
     },
     {
       id: 'settings',
@@ -926,6 +1017,81 @@ function App() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeSidebarTab === 'tasks' && (
+            <div className="flex flex-1 flex-col gap-5 pb-8 animate-in fade-in duration-300">
+              <div>
+                <h2 className={cx('mb-2 text-2xl font-bold tracking-tight', isDarkMode ? 'text-slate-100' : 'text-gray-800')}>Tasks & Reminders</h2>
+                <p className={cx('text-sm font-medium', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Set up reminders and tasks.</p>
+              </div>
+
+              <div className={cx('rounded-2xl border p-4 shadow-xl backdrop-blur-xl', isDarkMode ? 'border-slate-700 bg-slate-800/40' : 'border-gray-200/50 bg-white/60')}>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className={cx('mb-1 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Task Title</label>
+                    <input
+                      type="text"
+                      value={newTaskTitle}
+                      onChange={e => setNewTaskTitle(e.target.value)}
+                      placeholder="What do you need to do?"
+                      className={cx('w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors backdrop-blur-md', isDarkMode ? 'border-slate-600 bg-slate-800/50 text-slate-100 focus:border-indigo-400' : 'border-gray-200 bg-white/70 text-gray-800 focus:border-indigo-300')}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={cx('mb-1 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Time</label>
+                      <input
+                        type="time"
+                        value={newTaskTime}
+                        onChange={e => setNewTaskTime(e.target.value)}
+                        className={cx('w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors backdrop-blur-md', isDarkMode ? 'border-slate-600 bg-slate-800/50 text-slate-100 focus:border-indigo-400' : 'border-gray-200 bg-white/70 text-gray-800 focus:border-indigo-300')}
+                      />
+                    </div>
+                    <div>
+                      <label className={cx('mb-1 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Frequency</label>
+                      <select
+                        value={newTaskFrequency}
+                        onChange={e => setNewTaskFrequency(e.target.value as 'once' | 'daily')}
+                        className={cx('w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors backdrop-blur-md appearance-none', isDarkMode ? 'border-slate-600 bg-slate-800/50 text-slate-100 focus:border-indigo-400' : 'border-gray-200 bg-white/70 text-gray-800 focus:border-indigo-300')}
+                      >
+                        <option value="once">Once</option>
+                        <option value="daily">Daily</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCreateTask}
+                    disabled={!newTaskTitle.trim() || !newTaskTime}
+                    className="mt-2 w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    Create Task
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {tasks.map(task => (
+                  <div key={task.id} className={cx('flex items-center justify-between rounded-xl border p-3 shadow-sm backdrop-blur-md', isDarkMode ? 'border-slate-700 bg-slate-800/80' : 'border-gray-200 bg-white/80')}>
+                    <div>
+                      <p className={cx('text-sm font-semibold', isDarkMode ? 'text-slate-200' : 'text-gray-800')}>{task.title}</p>
+                      <p className={cx('text-xs', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>
+                        {new Date(task.triggerTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • {task.frequency === 'daily' ? 'Daily' : 'Once'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className={cx('rounded-lg p-1.5 transition-colors', isDarkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50')}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
+                ))}
+                {tasks.length === 0 && (
+                  <p className={cx('text-center text-sm mt-4', isDarkMode ? 'text-slate-500' : 'text-gray-400')}>No tasks right now.</p>
+                )}
+              </div>
             </div>
           )}
 

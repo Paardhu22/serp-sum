@@ -301,6 +301,36 @@ async function callImageBackend(prompt: string, style?: string, size?: '1024x102
   };
 }
 
+// ── Alarm Listener ─────────────────────────────────────────────────────────────
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  console.log("ALARM FIRED:", alarm);
+  const data = await chrome.storage.local.get(['tasks']);
+  const tasks = (data.tasks as any[]) || [];
+  const task = tasks.find((t: any) => t.id === alarm.name);
+  if (task) {
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('Gemini_Generated_Image_v58ufcv58ufcv58u-removebg-preview.png'),
+      title: 'serp-sum Reminder',
+      message: task.title,
+      requireInteraction: true,
+      priority: 2,
+    }, (notificationId) => {
+      if (chrome.runtime.lastError) {
+        console.error("Notification Error:", chrome.runtime.lastError);
+      } else {
+        console.log("Notification sent:", notificationId);
+      }
+    });
+    if (task.frequency === 'once') {
+      const updatedTasks = tasks.filter((t: any) => t.id !== alarm.name);
+      await chrome.storage.local.set({ tasks: updatedTasks });
+    }
+  } else {
+    console.warn("Task not found for alarm:", alarm.name);
+  }
+});
+
 // ── Message Listener ─────────────────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
   const safeError = (err: unknown) => {
