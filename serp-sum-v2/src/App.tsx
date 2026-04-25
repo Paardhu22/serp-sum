@@ -113,8 +113,10 @@ function App() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskTime, setNewTaskTime] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('12:00');
   const [newTaskFrequency, setNewTaskFrequency] = useState<'once' | 'daily'>('once');
+  const [isHourDropdownOpen, setIsHourDropdownOpen] = useState(false);
+  const [isMinuteDropdownOpen, setIsMinuteDropdownOpen] = useState(false);
 
   const [user, setUser] = useState<any>(null);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -839,7 +841,7 @@ function App() {
     }
 
     setNewTaskTitle('');
-    setNewTaskTime('');
+    setNewTaskTime('12:00');
     setNewTaskFrequency('once');
   };
 
@@ -1042,12 +1044,88 @@ function App() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className={cx('mb-1 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Time</label>
-                      <input
-                        type="time"
-                        value={newTaskTime}
-                        onChange={e => setNewTaskTime(e.target.value)}
-                        className={cx('w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors backdrop-blur-md', isDarkMode ? 'border-slate-600 bg-slate-800/50 text-slate-100 focus:border-indigo-400' : 'border-gray-200 bg-white/70 text-gray-800 focus:border-indigo-300')}
-                      />
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <button
+                          onClick={() => setIsHourDropdownOpen(!isHourDropdownOpen)}
+                          className={cx('flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors backdrop-blur-md', isDarkMode ? 'border-slate-600 bg-slate-800/50 text-slate-100 focus:border-indigo-400' : 'border-gray-200 bg-white/70 text-gray-800 focus:border-indigo-300')}
+                        >
+                          {newTaskTime.split(':')[0] || '12'}h
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform opacity-50', isHourDropdownOpen && 'rotate-180')}><path d="m6 9 6 6 6-6" /></svg>
+                        </button>
+                        
+                        {isHourDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setIsHourDropdownOpen(false)} />
+                            <div className={cx(
+                              'absolute left-0 top-full z-20 mt-2 max-h-60 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 rounded-xl border shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-200',
+                              isDarkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/70 border-white/30'
+                            )}>
+                              {Array.from({ length: 24 }).map((_, i) => {
+                                const val = i.toString().padStart(2, '0');
+                                return (
+                                  <button
+                                    key={val}
+                                    onClick={() => {
+                                      setNewTaskTime(`${val}:${newTaskTime.split(':')[1] || '00'}`);
+                                      setIsHourDropdownOpen(false);
+                                    }}
+                                    className={cx(
+                                      'w-full px-4 py-2 text-left text-sm transition-colors',
+                                      newTaskTime.split(':')[0] === val
+                                        ? (isDarkMode ? 'bg-indigo-500/30 text-indigo-300' : 'bg-indigo-100 text-indigo-700')
+                                        : (isDarkMode ? 'text-slate-200 hover:bg-indigo-500/20 hover:text-indigo-400' : 'text-gray-700 hover:bg-indigo-500/10 hover:text-indigo-500')
+                                    )}
+                                  >
+                                    {val}h
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="relative flex-1">
+                        <button
+                          onClick={() => setIsMinuteDropdownOpen(!isMinuteDropdownOpen)}
+                          className={cx('flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors backdrop-blur-md', isDarkMode ? 'border-slate-600 bg-slate-800/50 text-slate-100 focus:border-indigo-400' : 'border-gray-200 bg-white/70 text-gray-800 focus:border-indigo-300')}
+                        >
+                          {newTaskTime.split(':')[1] || '00'}m
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={cx('transition-transform opacity-50', isMinuteDropdownOpen && 'rotate-180')}><path d="m6 9 6 6 6-6" /></svg>
+                        </button>
+                        
+                        {isMinuteDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setIsMinuteDropdownOpen(false)} />
+                            <div className={cx(
+                              'absolute left-0 top-full z-20 mt-2 max-h-60 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 rounded-xl border shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-200',
+                              isDarkMode ? 'bg-gray-900/80 border-gray-700' : 'bg-white/70 border-white/30'
+                            )}>
+                              {Array.from({ length: 60 }).map((_, i) => {
+                                const val = i.toString().padStart(2, '0');
+                                return (
+                                  <button
+                                    key={val}
+                                    onClick={() => {
+                                      setNewTaskTime(`${newTaskTime.split(':')[0] || '12'}:${val}`);
+                                      setIsMinuteDropdownOpen(false);
+                                    }}
+                                    className={cx(
+                                      'w-full px-4 py-2 text-left text-sm transition-colors',
+                                      newTaskTime.split(':')[1] === val
+                                        ? (isDarkMode ? 'bg-indigo-500/30 text-indigo-300' : 'bg-indigo-100 text-indigo-700')
+                                        : (isDarkMode ? 'text-slate-200 hover:bg-indigo-500/20 hover:text-indigo-400' : 'text-gray-700 hover:bg-indigo-500/10 hover:text-indigo-500')
+                                    )}
+                                  >
+                                    {val}m
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                     </div>
                     <div>
                       <label className={cx('mb-1 block text-xs font-bold uppercase tracking-wider', isDarkMode ? 'text-slate-400' : 'text-gray-500')}>Frequency</label>
