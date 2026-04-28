@@ -624,6 +624,16 @@ function App() {
     void startVoiceRecognition();
   };
 
+  const handleSpeak = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Text-to-speech is not supported in your browser.");
+    }
+  };
+
   const handleTranslate = async () => {
     const text = translateInput.trim();
     if (!text || isTranslating) {
@@ -1519,7 +1529,7 @@ function App() {
               {messages.map((msg, index) => (
                 <div key={index} className={cx('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                   <div className={cx(
-                    'max-w-[90%] rounded-2xl p-4 leading-relaxed',
+                    'max-w-[90%] rounded-2xl p-4 leading-relaxed relative group',
                     msg.role === 'user'
                       ? 'bg-[#eef2ff] text-indigo-900 rounded-br-sm font-sans text-sm'
                       : isDarkMode
@@ -1527,7 +1537,19 @@ function App() {
                         : 'bg-transparent text-gray-800 text-[14.5px]',
                   )}>
                     {msg.role === 'assistant' ? (
-                      <MessageMarkdown content={msg.content} />
+                      <>
+                        <MessageMarkdown content={msg.content} />
+                        <button
+                          onClick={() => handleSpeak(msg.content)}
+                          className={cx(
+                            "absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity",
+                            isDarkMode ? "hover:bg-slate-800 text-slate-400" : "hover:bg-gray-100 text-gray-500"
+                          )}
+                          title="Read aloud"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                        </button>
+                      </>
                     ) : (
                       <p className="whitespace-pre-wrap">{msg.content}</p>
                     )}
